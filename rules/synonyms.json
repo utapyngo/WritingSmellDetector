@@ -1,0 +1,57 @@
+{
+    "ruleset": "Synonyms",
+    "type": "re",
+    "prefix": "\\b",
+    "suffix": "\\b",
+    "rules": [
+        {
+            "name": "For Because / Why",
+            "re": [
+                "[Tt]he reason for", "[Tt]he reason that", "[Dd]ue to the fact that", "[Ow]ing to the fact that", "[Ii]n light of the fact that", "[Cc]onsidering the fact that", "[Oo]n the grounds that", "[Tt]his is why"
+            ]
+        },
+        {
+            "name": "For although, even though",
+            "re": [
+                "despite the fact that", "regardless of the fact that", "nowithstanding the fact that"
+            ]
+        },
+        {
+            "name": "For about",
+            "re": [
+                "[Aa]s regards", "[Ii]n reference to", "[Ww]ith regard to", "[Cc]oncerning the matter of", "[Ww]here [a-z]+ is concerned"
+            ]
+        },
+        {
+            "name": "For may, might, can, could",
+            "re": [
+                "[Ii]t is possible that", "[Tt]here is a chance that", "[Ii]t could happen that", "[Tt]he possibility exists for"
+            ]
+        },
+        {
+            "name": "For more, less/fewer, better, worse",
+            "suffix": "",
+            "re": [
+                "increase", "decrease"
+            ]
+        },
+        {
+            "name": "For must / should",
+            "re": [
+                "[Ii]t is crucial that", "[Ii]t is necessary that", "[Tt]here is a need", "[Tt]there is a necessity for", "[Ii]t is important that","[Ii]t is incumbent upon", "[Cc]annot be avoided"
+            ]
+        },
+        {
+            "name": "For before, after, as",
+            "re": [
+                "[Pp]rior to", "[Ii]n anticipation of", "[Ss]ubsequent to", "[Ff]ollowing on", "[Aa]t the same time as", "[Ss]imultaneously with"
+            ]
+        },
+        {
+            "name": "For can",
+            "re": [
+                "[Ii]s able to", "[Ii]n a position to", "[Hh]as the capacity to", "[Hh]as the opportunity to", "[Hh]as the ability to"
+            ]
+        }
+    ]
+}

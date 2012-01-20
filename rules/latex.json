@@ -1,0 +1,34 @@
+{
+    "ruleset": "LaTeX punctuation",
+    "type": "re",
+    "rules": [
+        {
+            "name": "No Space Prior to Citation",
+            "re": "[a-zA-Z] \\\\cite"
+        },
+        {
+            "name": "No space before parentheses",
+            "re": "[a-zA-Z]\\("
+        },
+        {
+            "name": "Punctuation mark outside quotation mark",
+            "re": "[a-z]+''[.?,]"
+        },
+        {
+            "name": "Dashes",
+            "prefix": "[a-z]",
+            "suffix": "[a-z]",
+            "re": [
+                    "---",
+                    " --- ",
+                    " ---",
+                    "---"
+            ]
+        }
+    ]
+}
+
+
+
+
+

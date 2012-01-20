@@ -1,0 +1,27 @@
+{
+    "ruleset": "Punctuation",
+    "type": "re",
+    "rules": [
+        {
+            "name": "No Space after period",
+            "re": "\\.[a-zA-Z]+"
+        },
+        {
+            "name": "Multiple spaces after period",
+            "re": "\\.  +[a-zA-Z]+"
+        },
+        {
+            "name": "Serial comma",
+            "re": ", [a-z]+, and"
+        },
+        {
+            "name": "No serial comma",
+            "re": ", [a-z]+ and"
+        }
+    ]
+}
+
+
+
+
+

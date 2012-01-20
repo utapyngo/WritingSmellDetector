@@ -1,0 +1,11 @@
+{
+    "ruleset": "Acronyms",
+    "type": "re",
+    "prefix": "\\b",
+    "suffix": "\\b",
+    "rules": [
+        {
+            "re": "[A-Z][A-Z]+"
+        }
+    ]
+}

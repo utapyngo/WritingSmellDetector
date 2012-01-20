@@ -1,0 +1,58 @@
+{
+    "ruleset": "Spelling Concision",
+    "type": "re",
+    "prefix": "\\b",
+    "suffix": "\\b",
+    "rules": [
+        {
+            "name": "Negatives",
+            "re": {
+                "not many": "few",
+                "not the same": "difference",
+                "not diferent": "alike / similar",
+                "did not": "failed to",
+                "does not have": "lacks",
+                "did not stay": "left", 
+                "not old enough": "too young",
+                "did not remember": "forgot", 
+                "did not consider": "ignored",
+                "did not allow": "prevented", 
+                "did not accept": "rejected",
+                "not clearly": "unclearly",
+                "not possible": "impossible",
+                "not able": "unable", 
+                "not certain": "uncertain"
+            }
+        },
+        {
+            "name": "Pompous Diction",
+            "re": {
+                "contingent upon": "dependent upon",
+                "endeavor": "try",
+                "utilization": "use",
+                "Termination": "end",
+                "Initiate": "begin",
+                "Cognizant of": "aware of",
+                "ascertain": "find out",
+                "facilitate": "help",
+                "implement": "start / carry out, begin",
+                "deem": "think",
+                "envisage": "think, regard, see",
+                "advert to": "mention",
+                "apprise": "inform",
+                "eventuate": "happen",
+                "transpire": "happen",
+                "render": "make / give",
+                "transmit": "send",
+                "prior to": "before",
+                "subsequent to": "after"
+            }
+        },
+        {
+            "name": "Meaningless Modifiers",
+            "re": [
+                "kind of", "really", "basically", "definitely", "practically", "actually", "virtually", "generally", "certain", "particular", "individual", "given", "various", "specific", "for all intents and purposes"
+            ]
+        }
+    ]
+}
