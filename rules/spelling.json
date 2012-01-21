@@ -3,6 +3,10 @@
     "type": "re",
     "prefix": "\\b",
     "suffix": "\\b",
+    "flags": "I",
+    "replace": {
+        " ": "\\s+"
+    },
     "rules": [
         {
             "name": "Negatives",
@@ -32,7 +36,7 @@
                 "utilization": "use",
                 "Termination": "end",
                 "Initiate": "begin",
-                "Cognizant of": "aware of",
+                "cognizant of": "aware of",
                 "ascertain": "find out",
                 "facilitate": "help",
                 "implement": "start / carry out, begin",

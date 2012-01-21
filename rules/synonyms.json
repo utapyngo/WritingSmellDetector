@@ -3,11 +3,15 @@
     "type": "re",
     "prefix": "\\b",
     "suffix": "\\b",
+    "flags": "I",
+    "replace": {
+        " ": "\\s+"
+    },
     "rules": [
         {
             "name": "For Because / Why",
             "re": [
-                "[Tt]he reason for", "[Tt]he reason that", "[Dd]ue to the fact that", "[Ow]ing to the fact that", "[Ii]n light of the fact that", "[Cc]onsidering the fact that", "[Oo]n the grounds that", "[Tt]his is why"
+                "the reason for", "the reason that", "due to the fact that", "owing to the fact that", "in light of the fact that", "considering the fact that", "on the grounds that", "this is why"
             ]
         },
         {
@@ -19,13 +23,13 @@
         {
             "name": "For about",
             "re": [
-                "[Aa]s regards", "[Ii]n reference to", "[Ww]ith regard to", "[Cc]oncerning the matter of", "[Ww]here [a-z]+ is concerned"
+                "as regards", "in reference to", "with regard to", "concerning the matter of", "where \\w+ is concerned"
             ]
         },
         {
             "name": "For may, might, can, could",
             "re": [
-                "[Ii]t is possible that", "[Tt]here is a chance that", "[Ii]t could happen that", "[Tt]he possibility exists for"
+                "it is possible that", "there is a chance that", "it could happen that", "the possibility exists for"
             ]
         },
         {
@@ -38,19 +42,19 @@
         {
             "name": "For must / should",
             "re": [
-                "[Ii]t is crucial that", "[Ii]t is necessary that", "[Tt]here is a need", "[Tt]there is a necessity for", "[Ii]t is important that","[Ii]t is incumbent upon", "[Cc]annot be avoided"
+                "it is crucial that", "it is necessary that", "there is a need", "tthere is a necessity for", "it is important that", "it is incumbent upon", "cannot be avoided"
             ]
         },
         {
             "name": "For before, after, as",
             "re": [
-                "[Pp]rior to", "[Ii]n anticipation of", "[Ss]ubsequent to", "[Ff]ollowing on", "[Aa]t the same time as", "[Ss]imultaneously with"
+                "prior to", "in anticipation of", "subsequent to", "following on", "at the same time as", "simultaneously with"
             ]
         },
         {
             "name": "For can",
             "re": [
-                "[Ii]s able to", "[Ii]n a position to", "[Hh]as the capacity to", "[Hh]as the opportunity to", "[Hh]as the ability to"
+                "is able to", "in a position to", "has the capacity to", "has the opportunity to", "has the ability to"
             ]
         }
     ]

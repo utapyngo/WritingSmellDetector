@@ -1,4 +1,5 @@
 import re
+import math
 
 class WritingSmellRule(object):
     '''Base class of rules'''
@@ -17,20 +18,47 @@ class WritingSmellRuleSet(object):
         pass
 
 
+def process_flags(flags, default=0):
+    '''Process a string of regular expression flags like "+LUX-M".
+    Return a combination of corresponding re.X values.
+    '''
+    mode = '+'
+    result = default
+    for flag in flags:
+        if flag in '+-':
+            mode = flag
+            continue
+        elif flag in 'SLUMIX':
+            if mode == '-':
+                result = result &~ getattr(re, flag)
+            else:
+                result |= getattr(re, flag)
+        else:
+            print 'WARNING: unknown flag:', flag
+            continue
+    return result
+
+
+default_flags = re.S | re.U
+
+
 class RegularExpressionRule(WritingSmellRule):
     '''Regular expression rule'''
 
-    def __init__(self, json_dict, prefix='', suffix=''):
+    def __init__(self, json_dict, prefix, suffix, flags, replace):
         self.name = json_dict.get('name', '')
         self.comments = json_dict.get('comments', [])
         self.prefix = json_dict.get('prefix', prefix)
         self.suffix = json_dict.get('suffix', suffix)
+        self.flags = process_flags(json_dict.get('flags', ''), flags)
+        self.replace = json_dict.get('replace', replace)
         self.re = json_dict.get('re', [])
         self.patterns = []
         if isinstance(self.re, basestring):
-            self.patterns = [self.re]
+            self.patterns = [self.prefix + self.re + self.suffix]
         elif hasattr(self.re, '__getitem__'):
-            self.patterns = [e for e in self.re]
+            self.patterns = [self.prefix + e + self.suffix for e in self.re]
+        self.patterns = [re.sub(s, r, p) for s, r in self.replace.iteritems() for p in self.patterns]
 
     def match_text(self, text):
         '''
@@ -47,18 +75,24 @@ class RegularExpressionRule(WritingSmellRule):
         else:
             pieces = text
         for pattern in self.patterns:
-            # pattern with prefix and suffix
-            p = self.prefix + pattern + self.suffix
             # list of pairs (piece, matches)
             piece_matches = []
             for piece in pieces:
-                matches = re.finditer(p, piece)
-                if re.search(p, piece):
+                matches = re.finditer(pattern, piece, self.flags)
+                if re.search(pattern, piece, self.flags):
                     piece_matches.append((piece, matches))
-            yield p, piece_matches
+            yield pattern, piece_matches
 
     def process(self, text):
         '''Apply the rule to text and print the results'''
+
+        # max number of digits in line number
+        line_number_max_digits = int(math.ceil(math.log10(text.count('\n') + 1)))
+
+        def print_line(line, lineno):
+            for i, chunk in enumerate(line.split('\n')):
+                print ('{{0:>{0}}}: {{1}}').format(line_number_max_digits).format(lineno + i, chunk)
+
         print
         if self.name:
             print 'Rule:', self.name
@@ -72,8 +106,10 @@ class RegularExpressionRule(WritingSmellRule):
             print r'WARNING: \b found in suffix. To match word boundaries use \\b instead.'
 
         if hasattr(self.re, 'iteritems'):
+            max_length = 1 + max([len(e) for e in self.re.iterkeys()])
             for pattern, replacement in self.re.iteritems():
-                print '{0:>40} -> {1}'.format(pattern, replacement)
+                print '{{0:>{0}}} -> {{1}}'.format(max_length).format(pattern, replacement)
+
         for pattern, item_matches in self.match_text(text):
             print
             print 'Pattern: "{0}"'.format(pattern)
@@ -87,17 +123,18 @@ class RegularExpressionRule(WritingSmellRule):
                     if plineno is not None and lineno != plineno:
                         # this is another line
                         # print previous line
-                        print '{0}: {1}'.format(plineno, line)
+                        print_line(line, plineno)
                     if plineno is None or lineno != plineno:
                         # first iteration or other line
                         linestart = item.rfind('\n', 0, start) + 1
                         lineend = item.find('\n', end, -1)
                         line = text[linestart:lineend]
+                    # location of the match relative to current line
                     lstart, lend = start - linestart, end - linestart
                     line = line[:lstart] + '*' + line[lstart:lend] + '*' + line[lend:]
                     linestart -= 2
                     plineno = lineno
-                print '{0}: {1}'.format(plineno, line)
+                print_line(line, plineno)
                 found = True
             if not found:
                 print "No matches"
@@ -111,7 +148,9 @@ class RegularExpressionRuleSet(WritingSmellRuleSet):
         self.comments = json_dict.get('comments')
         self.prefix = json_dict.get('prefix', '')
         self.suffix = json_dict.get('suffix', '')
-        self.rules = [RegularExpressionRule(d, self.prefix, self.suffix) for d in json_dict['rules']]
+        self.flags = process_flags(json_dict.get('flags', ''), default_flags)
+        self.replace = json_dict.get('replace', {})
+        self.rules = [RegularExpressionRule(d, self.prefix, self.suffix, self.flags, self.replace) for d in json_dict['rules']]
 
     def process(self, text):
         '''Apply all rules to text and print the results'''
@@ -124,6 +163,7 @@ class RegularExpressionRuleSet(WritingSmellRuleSet):
                 print comment
         for rule in self.rules:
             rule.process(text)
+
 
 def usage():
     print 'Usage:'

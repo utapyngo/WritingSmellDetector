@@ -7,16 +7,20 @@
     ],
     "prefix": "\\b",
     "suffix": "\\b",
+    "flags": "I",
+    "replace": {
+        " ": "\\s+"
+    },
     "rules": [
         {
             "re": [
-                "[a-zA-Z]+ion of",
-                "[a-zA-Z]+ed an",
-                "[a-zA-Z]+ of (the|a)",
-                "was [a-zA-Z]+en",
-                "were [a-zA-Z]+",
-                "it was [a-zA-Z]+",
-                "[a-zA-Z]+ly",
+                "\\w+ion of",
+                "\\w+ed an",
+                "\\w+ of (the|a)",
+                "was \\w+en",
+                "were \\w+",
+                "it was \\w+",
+                "\\w+ly",
                 "(for the reason that|due to the fact that|owing to the fact that|in light of the fact that|considering the fact that|on the grounds that|this is why|the reason for)"
             ]
         }

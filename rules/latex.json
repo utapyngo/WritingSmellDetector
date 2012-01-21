@@ -1,23 +1,24 @@
 {
     "ruleset": "LaTeX punctuation",
     "type": "re",
+    "flags": "I",
     "rules": [
         {
             "name": "No Space Prior to Citation",
-            "re": "[a-zA-Z] \\\\cite"
+            "re": "\\w \\\\cite"
         },
         {
             "name": "No space before parentheses",
-            "re": "[a-zA-Z]\\("
+            "re": "\\w\\("
         },
         {
             "name": "Punctuation mark outside quotation mark",
-            "re": "[a-z]+''[.?,]"
+            "re": "\\w+''[.?,]"
         },
         {
             "name": "Dashes",
-            "prefix": "[a-z]",
-            "suffix": "[a-z]",
+            "prefix": "\\w",
+            "suffix": "\\w",
             "re": [
                     "---",
                     " --- ",

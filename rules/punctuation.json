@@ -1,22 +1,23 @@
 {
     "ruleset": "Punctuation",
     "type": "re",
+    "flags": "I",
     "rules": [
         {
             "name": "No Space after period",
-            "re": "\\.[a-zA-Z]+"
+            "re": "\\.\\w+"
         },
         {
             "name": "Multiple spaces after period",
-            "re": "\\.  +[a-zA-Z]+"
+            "re": "\\.  +\\w+"
         },
         {
             "name": "Serial comma",
-            "re": ", [a-z]+, and"
+            "re": ", \\w+, and"
         },
         {
             "name": "No serial comma",
-            "re": ", [a-z]+ and"
+            "re": ", \\w+ and"
         }
     ]
 }

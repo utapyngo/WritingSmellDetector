@@ -3,6 +3,7 @@
     "type": "re",
     "prefix": "\\b",
     "suffix": "\\b",
+    "flags": "-I",
     "rules": [
         {
             "re": "[A-Z][A-Z]+"
