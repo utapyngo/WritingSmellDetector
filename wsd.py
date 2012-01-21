@@ -53,12 +53,15 @@ class RegularExpressionRule(WritingSmellRule):
         self.flags = process_flags(json_dict.get('flags', ''), flags)
         self.replace = json_dict.get('replace', replace)
         self.re = json_dict.get('re', [])
-        self.patterns = []
         if isinstance(self.re, basestring):
-            self.patterns = [self.prefix + self.re + self.suffix]
+            patterns = [self.prefix + self.re + self.suffix]
         elif hasattr(self.re, '__getitem__'):
-            self.patterns = [self.prefix + e + self.suffix for e in self.re]
-        self.patterns = [re.sub(s, r, p) for s, r in self.replace.iteritems() for p in self.patterns]
+            patterns = [self.prefix + e + self.suffix for e in self.re]
+        self.patterns = []
+        for p in patterns:
+            for s, r in self.replace.iteritems():
+                p = re.sub(s, r, p)
+            self.patterns.append(re.compile(p, self.flags))
 
     def match_text(self, text):
         '''
@@ -78,8 +81,8 @@ class RegularExpressionRule(WritingSmellRule):
             # list of pairs (piece, matches)
             piece_matches = []
             for piece in pieces:
-                matches = re.finditer(pattern, piece, self.flags)
-                if re.search(pattern, piece, self.flags):
+                matches = pattern.finditer(piece)
+                if pattern.search(piece):
                     piece_matches.append((piece, matches))
             yield pattern, piece_matches
 
@@ -94,8 +97,7 @@ class RegularExpressionRule(WritingSmellRule):
                 print ('{{0:>{0}}}: {{1}}').format(line_number_max_digits).format(lineno + i, chunk)
 
         print
-        if self.name:
-            print 'Rule:', self.name
+        print 'Rule:', self.name
         if self.comments:
             for comment in self.comments:
                 print comment
@@ -112,7 +114,7 @@ class RegularExpressionRule(WritingSmellRule):
 
         for pattern, item_matches in self.match_text(text):
             print
-            print 'Pattern: "{0}"'.format(pattern)
+            print 'Pattern: "{0}"'.format(pattern.pattern)
             found = False
             for item, matches in item_matches:
                 line = None
@@ -154,7 +156,6 @@ class RegularExpressionRuleSet(WritingSmellRuleSet):
 
     def process(self, text):
         '''Apply all rules to text and print the results'''
-        # lines = text.split('\n')
         print
         print
         print 'Ruleset:', self.name
