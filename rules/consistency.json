@@ -1,0 +1,37 @@
+{
+    "ruleset": "Consistency",
+    "type": "re",
+    "prefix": "\\b",
+    "suffix": "\\b",
+    "flags": "I",
+    "rules": [
+        {
+            "name": "a / an agreement",
+            "prefix": "\\b",
+            "suffix": "",
+            "re": [
+                "a [aeiou]",
+                "an [bcdfghjklmnpqrstvwxz]"
+            ]
+        },
+        {
+            "name": "can not",
+            "re": "can not"
+        },
+        {
+            "name": "double words",
+            "re": "(\\w+)\\s+\\1"
+        },
+        {
+            "name": "Improper Latinate Express",
+            "comments": [
+                "Use e.g. to mean \"for example\", and i.e. to mean \"that is\""
+            ],
+            "re": [
+                "i\\.e\\.",
+                "e\\.g\\.",
+                "etc\\.",
+            ]
+        }
+    ]
+}

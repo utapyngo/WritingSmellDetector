@@ -1,0 +1,33 @@
+{
+    "ruleset": "Bêtes noire",
+    "type": "re",
+    "prefix": "\\b",
+    "suffix": "\\b",
+    "flags": "I",
+    "replace": {
+        " ": "\\s+"
+    },
+    "rules": [
+        {
+            "name": "Using \"different than\" or \"different to\"",
+            "re": "different (than|to)"
+        },
+        {
+            "name": "He or She for personal pronouns",
+            "re": "(he|she)"
+        },
+        {
+            "name": "Adverb Start to Sentence",
+            "flags": "-I",
+            "re": " [A-Z][a-z]+ly,"
+        },
+        {
+            "name": "Irregardless",
+            "re": "iregardless",
+        },
+        {
+            "name": "Finalize",
+            "re": "finalize"
+        }
+    ]
+}

@@ -27,6 +27,12 @@
                 "(their's|theirs')",
                 "(his's|his')"
             ]
+        },
+        {
+            "name": "It's vs. Its",
+            "prefix": "\\b",
+            "suffix": "\\b",
+            "re": "it's"
         }
     ]
 }

@@ -1,0 +1,19 @@
+{
+    "ruleset": "Formatting",
+    "type": "re",
+    "flags": "I",
+    "rules": [
+        {
+            "name": "Spell out ordinals",
+            "prefix": "\\b",
+            "suffix": "\\b",
+            "re": [
+                "1st", "2nd", "3rd", "[4-9]th", "10th"
+            ]
+        },
+        {
+            "name": "Make numbers plural without an apostrophe (7.1.5)",
+            "re": "[0-9]'s\\b"
+        }
+    ]
+}

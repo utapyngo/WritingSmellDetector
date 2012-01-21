@@ -1,0 +1,27 @@
+{
+    "ruleset": "LaTeX formatting",
+    "type": "re",
+    "rules": [
+        {
+            "name": "No space between number and percent symbol",
+            "re": "\\%"
+        },
+        {
+            "name": "Currency - Close up (7.6)",
+            "re": "\\$[0-9]"
+        },
+        {
+            "name": "Table formatting: (a), (b), (c) or (1), (2), (3)",
+            "flags": "-I",
+            "re": [
+                "\\([a-z]\\)",
+                "\\([0-9]\\)"
+            ]
+        }
+    ]
+}
+
+
+
+
+

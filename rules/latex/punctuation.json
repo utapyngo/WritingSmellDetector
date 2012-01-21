@@ -8,10 +8,6 @@
             "re": "\\w \\\\cite"
         },
         {
-            "name": "No space before parentheses",
-            "re": "\\w\\("
-        },
-        {
             "name": "Punctuation mark outside quotation mark",
             "re": "\\w+''[.?,]"
         },
@@ -25,6 +21,10 @@
                     " ---",
                     "---"
             ]
+        },
+        {
+            "name": "Improper Quotation Marks",
+            "re": "\""
         }
     ]
 }

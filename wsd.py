@@ -94,10 +94,12 @@ class RegularExpressionRule(WritingSmellRule):
 
         def print_line(line, lineno):
             for i, chunk in enumerate(line.split('\n')):
-                print ('{{0:>{0}}}: {{1}}').format(line_number_max_digits).format(lineno + i, chunk)
+                # print ('{{0:>{0}}}: {{1}}').format(line_number_max_digits).format(lineno + i, chunk)
+                print('{1:>{0}}: {2}'.format(line_number_max_digits, lineno + i, chunk))
 
         print
-        print 'Rule:', self.name
+        if self.name or self.comments:
+            print 'Rule:', self.name
         if self.comments:
             for comment in self.comments:
                 print comment
@@ -110,11 +112,11 @@ class RegularExpressionRule(WritingSmellRule):
         if hasattr(self.re, 'iteritems'):
             max_length = 1 + max([len(e) for e in self.re.iterkeys()])
             for pattern, replacement in self.re.iteritems():
-                print '{{0:>{0}}} -> {{1}}'.format(max_length).format(pattern, replacement)
+                print '{1:>{0}} -> {2}'.format(max_length, pattern, replacement)
 
         for pattern, item_matches in self.match_text(text):
             print
-            print 'Pattern: "{0}"'.format(pattern.pattern)
+            print 'Pattern: /{0}/'.format(pattern.pattern)
             found = False
             for item, matches in item_matches:
                 line = None
@@ -203,7 +205,14 @@ def main(*args):
             else:
                 rule_files = (rule_file_or_dir,)
             for rule_file in rule_files:
-                ruleset = RegularExpressionRuleSet(json.load(open(rule_file)))
+                f = open(rule_file)
+                try:
+                    json_dict = json.load(f)
+                except ValueError, e:
+                    print "ERROR:", e
+                    print "In file", rule_file
+                    continue
+                ruleset = RegularExpressionRuleSet(json_dict)
                 ruleset.process(text)
             print
         if empty_mask:
