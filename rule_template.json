@@ -1,0 +1,72 @@
+{
+    "ruleset": "Ruleset Name",
+    // Currently only regular expression rules are supported
+    "type": "re",
+    // This value will be prepended to each pattern within this ruleset
+    // Note that backslashes should be escaped
+    // Can be overridden in individual rules
+    "prefix": "\\b",
+    // This value will be appended to each pattern within this ruleset
+    // Can be overridden in individual rules
+    "suffix": "\\b",
+    // Regular expression flags: ILMSUX
+    // I - ignore case
+    // Perform case-insensitive matching; expressions like [A-Z] will match lowercase letters, too.
+    // L - locale dependent
+    // Make \w, \W, \b, \B, \s and \S dependent on the current locale.
+    // M - multi-line
+    // When specified, the pattern character '^' matches at the beginning of the text
+    // and at the beginning of each line (immediately following each newline);
+    // and the pattern character '$' matches at the end of the text
+    // and at the end of each line (immediately preceding each newline).
+    // By default, '^' matches only at the beginning of the text,
+    // and '$' only at the end of the text
+    // and immediately before the newline (if any) at the end of the text.
+    // S - dot matches all character including newlines
+    // U - Unicode dependent
+    // ( Make \w, \W, \b, \B, \d, \D, \s and \S dependent on the Unicode character properties database. )
+    // X - verbose
+    // Default: "+SU"
+    // These flags can be modified in individual rules, e.g: "-I"
+    "flags": "+SU",
+    // Replace all occurrences of a pattern with an arbitrary string in all regular expressions
+    // Can be overridden in individual rules
+    "replace": {
+        " ": "\\s+"
+    },
+    "rules": [
+        {
+            "name": "Rule name",
+            // You can add comments to each rule
+            "comments": [
+                "First line",
+                "Second line"
+            ],
+            // Overriding prefix and suffix
+            "prefix": "",
+            "suffix": "",
+            // List of regular expression patterns
+            "re": [
+                "pattern",
+                "another pattern"
+            ]
+        },
+        {
+            "name": "Another rule",
+            // If there is only one pattern it can be written without brackets
+            "re": "just one pattern"
+        },
+        {
+            "name": "Replacements rule",
+            // If you want to specify common replacements, use this form:
+            "re": {
+                "replace something": "with something else",
+                "...": "...."
+            }
+        }
+    ]
+}
+
+
+
+

@@ -205,9 +205,11 @@ def main(*args):
             else:
                 rule_files = (rule_file_or_dir,)
             for rule_file in rule_files:
-                f = open(rule_file)
                 try:
-                    json_dict = json.load(f)
+                    jsoncomment = re.compile('^\s*//')
+                    # remove comments preserving the same number of lines
+                    jsonrule = ''.join(['\n' if jsoncomment.search(line) else line for line in open(rule_file).readlines()])
+                    json_dict = json.loads(jsonrule)
                 except ValueError, e:
                     print "ERROR:", e
                     print "In file", rule_file
