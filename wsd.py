@@ -1,6 +1,13 @@
 import re
 import math
 
+import logging
+logger = logging.getLogger(__name__)
+ch = logging.StreamHandler()
+ch.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+logger.addHandler(ch)
+logger.setLevel(logging.INFO)
+
 class WritingSmellRule(object):
     '''Base class of rules'''
 
@@ -34,7 +41,7 @@ def process_flags(flags, default=0):
             else:
                 result |= getattr(re, flag)
         else:
-            print 'WARNING: unknown flag:', flag
+            logger.warn('unknown flag: ' + flag)
             continue
     return result
 
@@ -105,9 +112,9 @@ class RegularExpressionRule(WritingSmellRule):
                 print comment
         # generate warning
         if '\b' in self.prefix:
-            print r'WARNING: \b found in prefix. To match word boundaries use \\b instead.'
+            logger.warn(r'\b found in prefix. To match word boundaries use \\b instead.')
         if '\b' in self.suffix:
-            print r'WARNING: \b found in suffix. To match word boundaries use \\b instead.'
+            logger.warn(r'\b found in suffix. To match word boundaries use \\b instead.')
 
         if hasattr(self.re, 'iteritems'):
             max_length = 1 + max([len(e) for e in self.re.iterkeys()])
@@ -191,11 +198,11 @@ def main(*args):
         rule_file_masks = args[1:]
     filename = args[0]
     if not os.path.isfile(filename):
-        print 'File not found:', filename
+        logger.error('File not found: ' + filename)
         return 1
     text = open(filename).read()
-    print 'Loaded {0} bytes of text from {1}'.format(len(text), filename)
-
+    logger.info('Loaded {0} bytes of text from {1}'.format(len(text), filename))
+    jsoncomment = re.compile('^\s*//')
     for mask in rule_file_masks:
         empty_mask = True
         for rule_file_or_dir in glob(mask):
@@ -206,19 +213,18 @@ def main(*args):
                 rule_files = (rule_file_or_dir,)
             for rule_file in rule_files:
                 try:
-                    jsoncomment = re.compile('^\s*//')
                     # remove comments preserving the same number of lines
                     jsonrule = ''.join(['\n' if jsoncomment.search(line) else line for line in open(rule_file).readlines()])
                     json_dict = json.loads(jsonrule)
                 except ValueError, e:
-                    print "ERROR:", e
-                    print "In file", rule_file
+                    logger.error(e)
+                    logger.error("In file: " + rule_file)
                     continue
                 ruleset = RegularExpressionRuleSet(json_dict)
                 ruleset.process(text)
             print
         if empty_mask:
-            print 'No files matching "{0}" found'.format(mask)
+            logger.warn('No files matching "{0}" found'.format(mask))
 
 if __name__ == '__main__':
     import sys
