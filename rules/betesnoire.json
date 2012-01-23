@@ -1,5 +1,5 @@
 {
-    "ruleset": "Bêtes noire",
+    "ruleset": "Betes noire",
     "type": "re",
     "prefix": "\\b",
     "suffix": "\\b",
@@ -23,7 +23,7 @@
         },
         {
             "name": "Irregardless",
-            "re": "iregardless",
+            "re": "iregardless"
         },
         {
             "name": "Finalize",
