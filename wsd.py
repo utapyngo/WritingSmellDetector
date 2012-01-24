@@ -27,6 +27,9 @@ class WritingSmellRule(object):
 class WritingSmellRuleSet(object):
     '''Set of rules'''
 
+    def process(self, text):
+        pass
+
     def process_and_print(self, text):
         pass
 
@@ -72,12 +75,12 @@ class RegularExpressionRule(WritingSmellRule):
         self.replace = data.get('replace', replace)
         self.re = data.get('re', [])
         if isinstance(self.re, basestring):
-            patterns = [self.prefix + self.re + self.suffix]
+            patterns = [ self.re ]
         elif hasattr(self.re, '__getitem__'):
             patterns = self.re
         for p in patterns:
             if '\b' in p:
-                logger.warn(r'\b found in pattern. To match word boundaries use \\b instead.')
+                logger.warn(r'\b found in pattern {0}. To match word boundaries use \\b instead.'.format(p.replace('\b', r'\b')))
         patterns = [self.prefix + e + self.suffix for e in patterns]
         self.patterns = []
         for p in patterns:
@@ -111,8 +114,12 @@ class RegularExpressionRule(WritingSmellRule):
     def process(self, text):
         '''Apply the rule to text and return the result'''
 
-        matched_lines = set()
+        matched_lines = {}
         results = []
+
+        def add_line(line, lineno):
+            for i, chunk in enumerate(line.strip().split('\n')):
+                matched_lines[lineno + i] = chunk
 
         for pattern, item_matches in self.itermatches(text):
             rmatches = []
@@ -124,7 +131,7 @@ class RegularExpressionRule(WritingSmellRule):
                     linestart = item.rfind('\n', 0, start) + 1
                     lineend = item.find('\n', end, -1)
                     line = text[linestart:lineend] if lineend > 0 else text[linestart:]
-                    matched_lines.add((lineno, line))
+                    add_line(line, lineno)
                     # location of the match relative to current line
                     lstart, lend = start - linestart, end - linestart
                     rmatches.append((lineno, lstart, lend))
@@ -210,12 +217,11 @@ class RegularExpressionRuleSet(WritingSmellRuleSet):
 
     def process(self, text):
         '''Apply all rules to text and return the results'''
-
-        matched_lines = set()
+        matched_lines = {}
         matched_rules = []
         for rule in self.rules:
             lines, pattern_matches = rule.process(text)
-            matched_lines |= lines
+            matched_lines.update(lines)
             if pattern_matches:
                 matched_rules.append((rule.data, pattern_matches))
         results = self.data.copy()
@@ -225,9 +231,10 @@ class RegularExpressionRuleSet(WritingSmellRuleSet):
 
 def analyze(args):
     '''
-    Load text from first argument.
-    Load and run rulesets from files specified by all other arguments.
+    Load text from args.text.
+    Load and run rulesets from args.ruleset list.
     Shell wildcards are allowed in ruleset arguments.
+    Store results to args.outfile if specified.
     '''
     from glob import glob
     import os
@@ -244,7 +251,7 @@ def analyze(args):
 
     jsoncomment = re.compile('^\s*//')
     rulesets = []
-    matched_lines = set()
+    matched_lines = {}
     for mask in args.ruleset:
         empty_mask = True
         for rule_file_or_dir in glob(mask):
@@ -265,7 +272,7 @@ def analyze(args):
                 ruleset = RegularExpressionRuleSet(ruleset_dict)
                 if args.outfile:
                     lines, processed_ruleset = ruleset.process(text)
-                    matched_lines |= lines
+                    matched_lines.update(lines)
                     rulesets.append(processed_ruleset)
                 else:
                     ruleset.process_and_print(text)
@@ -280,7 +287,7 @@ def analyze(args):
                 'md5': hashlib.md5(args.text).hexdigest()
             }
         else:
-            json_results['lines'] = sorted(matched_lines)
+            json_results['lines'] = matched_lines
         json.dump(json_results, open(args.outfile, 'wb'), indent=args.indent)
         logger.info('Results saved to: {0}'.format(args.outfile))
 
@@ -293,17 +300,19 @@ if __name__ == '__main__':
         help='text file',)
     parser.add_argument('ruleset', type=str, nargs='*',
         help='ruleset file')
-    parser.add_argument('--outfile', action='store',
+    parser.add_argument('-o', '--outfile', action='store',
         help='output file name')
-    parser.add_argument('--reftext', action='store_true',
+    parser.add_argument('-r', '--reftext', action='store_true',
         help='insert a reference to the text file into the output file instead of a list of matching lines')
-    parser.add_argument('--abspath', action='store_true',
+    parser.add_argument('-a', '--abspath', action='store_true',
         help='use absolute path to the text file instead of the path passed to command line')
-    parser.add_argument('--indent', type=int, action='store', default=None,
+    parser.add_argument('-i', '--indent', type=int, action='store', default=4,
         help='json indent size')
     try:
         args = parser.parse_args()
     except Exception, e:
         logger.error(e)
         sys.exit(1)
+    if args.indent == 0:
+        args.indent = None
     sys.exit(analyze(args))
