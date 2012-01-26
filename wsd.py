@@ -11,7 +11,8 @@ ch.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
 logger.addHandler(ch)
 logger.setLevel(logging.INFO)
 
-class WritingSmellRule(object):
+
+class Rule(object):
     '''Base class of rules'''
 
     def itermatches(self, text):
@@ -24,7 +25,7 @@ class WritingSmellRule(object):
         pass
 
 
-class WritingSmellRuleSet(object):
+class RuleSet(object):
     '''Set of rules'''
 
     def process(self, text):
@@ -32,6 +33,34 @@ class WritingSmellRuleSet(object):
 
     def process_and_print(self, text):
         pass
+
+
+class RuleResults(object):
+    
+    def __init__(self, rule, lines, pattern_matches):
+        self.rule = rule
+        # dictionary of { lineno: line }
+        self.lines = lines
+        # dictionary of { pattern: [(lineno, start, end), ...] }
+        self.pattern_matches = pattern_matches
+              
+
+class RulesetResults(object):
+    
+    def __init__(self, ruleset, lines, matched_rules):
+        self.ruleset = ruleset
+        self.lines = lines
+        self.matched_rules = matched_rules
+        
+    def to_dict(self):
+        result = self.ruleset.data.copy()
+        matched_rules = []
+        for processed_rule in self.matched_rules:
+            rule_data = processed_rule.rule.data.copy()
+            rule_data['matches'] = processed_rule.pattern_matches
+            matched_rules.append(rule_data)
+        result['rules'] = matched_rules
+        return result
 
 
 def process_flags(flags, default=0):
@@ -58,7 +87,7 @@ def process_flags(flags, default=0):
 default_flags = re.S | re.U
 
 
-class RegularExpressionRule(WritingSmellRule):
+class RegularExpressionRule(Rule):
     '''Regular expression rule'''
 
     def __init__(self, data, prefix, suffix, flags, replace):
@@ -81,63 +110,49 @@ class RegularExpressionRule(WritingSmellRule):
         for p in patterns:
             if '\b' in p:
                 logger.warn(r'\b found in pattern {0}. To match word boundaries use \\b instead.'.format(p.replace('\b', r'\b')))
-        patterns = [self.prefix + e + self.suffix for e in patterns]
         self.patterns = []
         for p in patterns:
+            original_pattern = p
             for s, r in self.replace.iteritems():
                 p = re.sub(s, r, p)
-            self.patterns.append(re.compile(p, self.flags))
+            compiled = re.compile(self.prefix + p + self.suffix, self.flags)
+            self.patterns.append({ 'compiled': compiled,
+                                   'original': original_pattern })
 
     def itermatches(self, text):
         '''
-        Return an iterator over all patterns in rule.
-        Each pattern is accompanied with a list of pairs (piece, matches).
-        piece is an item of the text array.
-        matches is an iterator over all matches in the respective piece.
-        text can be either a list of strings or a string.
-        In case it is a string, each pattern has only one (piece, matches) pair
-        where piece is equal to text
+        Return an iterator over all pairs (pattern, matches).
+        matches is an iterator over all matches in the text.
         '''
-        if isinstance(text, basestring):
-            pieces = [text]
-        else:
-            pieces = text
         for pattern in self.patterns:
-            # list of pairs (piece, matches)
-            piece_matches = []
-            for piece in pieces:
-                matches = pattern.finditer(piece)
-                if pattern.search(piece):
-                    piece_matches.append((piece, matches))
-            yield pattern, piece_matches
+            yield pattern, pattern['compiled'].finditer(text)
 
     def process(self, text):
         '''Apply the rule to text and return the result'''
 
         matched_lines = {}
-        results = []
+        pattern_matches = {}
 
         def add_line(line, lineno):
             for i, chunk in enumerate(line.strip().split('\n')):
                 matched_lines[lineno + i] = chunk
 
-        for pattern, item_matches in self.itermatches(text):
+        for pattern, matches in self.itermatches(text):
             rmatches = []
-            for item, matches in item_matches:
-                line = None
-                for m in matches:
-                    start, end = m.span()
-                    lineno = item.count('\n', 0, start) + 1
-                    linestart = item.rfind('\n', 0, start) + 1
-                    lineend = item.find('\n', end, -1)
-                    line = text[linestart:lineend] if lineend > 0 else text[linestart:]
-                    add_line(line, lineno)
-                    # location of the match relative to current line
-                    lstart, lend = start - linestart, end - linestart
-                    rmatches.append((lineno, lstart, lend))
+            line = None
+            for m in matches:
+                start, end = m.span()
+                lineno = text.count('\n', 0, start) + 1
+                linestart = text.rfind('\n', 0, start) + 1
+                lineend = text.find('\n', end, -1)
+                line = text[linestart:lineend] if lineend > 0 else text[linestart:]
+                add_line(line, lineno)
+                # location of the match relative to current line
+                lstart, lend = start - linestart, end - linestart
+                rmatches.append((lineno, lstart, lend))
             if rmatches:
-                results.append((pattern.pattern, rmatches))
-        return matched_lines, results
+                pattern_matches[pattern['original']] = rmatches
+        return RuleResults(self, matched_lines, pattern_matches)
 
     def process_and_print(self, text):
         '''Apply the rule to text and print the results'''
@@ -161,37 +176,37 @@ class RegularExpressionRule(WritingSmellRule):
             for pattern, replacement in self.re.iteritems():
                 print '{1:>{0}} -> {2}'.format(max_length, pattern, replacement)
 
-        for pattern, item_matches in self.itermatches(text):
+        for pattern, matches in self.itermatches(text):
             print
-            print 'Pattern: /{0}/'.format(pattern.pattern)
+            print 'Pattern: /{0}/'.format(pattern['original'])
             found = False
-            for item, matches in item_matches:
-                line = None
-                plineno = None
-                for m in matches:
-                    start, end = m.span()
-                    lineno = item.count('\n', 0, start) + 1
-                    if plineno is not None and lineno != plineno:
-                        # this is another line
-                        # print previous line
-                        print_line(line, plineno)
-                    if plineno is None or lineno != plineno:
-                        # first iteration or other line
-                        linestart = item.rfind('\n', 0, start) + 1
-                        lineend = item.find('\n', end, -1)
-                        line = text[linestart:lineend] if lineend > 0 else text[linestart:]
-                    # location of the match relative to current line
-                    lstart, lend = start - linestart, end - linestart
-                    line = line[:lstart] + '*' + line[lstart:lend] + '*' + line[lend:]
-                    linestart -= 2
-                    plineno = lineno
-                print_line(line, plineno)
+            line = None
+            plineno = None
+            for m in matches:
                 found = True
-            if not found:
+                start, end = m.span()
+                lineno = text.count('\n', 0, start) + 1
+                if plineno is not None and lineno != plineno:
+                    # this is another line
+                    # print previous line
+                    print_line(line, plineno)
+                if plineno is None or lineno != plineno:
+                    # first iteration or other line
+                    linestart = text.rfind('\n', 0, start) + 1
+                    lineend = text.find('\n', end, -1)
+                    line = text[linestart:lineend] if lineend > 0 else text[linestart:]
+                # location of the match relative to current line
+                lstart, lend = start - linestart, end - linestart
+                line = line[:lstart] + '*' + line[lstart:lend] + '*' + line[lend:]
+                linestart -= 2
+                plineno = lineno
+            if found:
+                print_line(line, plineno)
+            else:
                 print "No matches"
 
 
-class RegularExpressionRuleSet(WritingSmellRuleSet):
+class RegularExpressionRuleSet(RuleSet):
     '''Set of regular expression rules'''
 
     def __init__(self, data):
@@ -220,13 +235,12 @@ class RegularExpressionRuleSet(WritingSmellRuleSet):
         matched_lines = {}
         matched_rules = []
         for rule in self.rules:
-            lines, pattern_matches = rule.process(text)
-            matched_lines.update(lines)
-            if pattern_matches:
-                matched_rules.append((rule.data, pattern_matches))
-        results = self.data.copy()
-        results['matched_rules'] = matched_rules
-        return matched_lines, results
+            processed_rule = rule.process(text)
+            matched_lines.update(processed_rule.lines)
+            matched_rules.append(processed_rule)
+            #if processed_rule.pattern_matches:
+            #    matched_rules.append((rule, processed_rule.pattern_matches))
+        return RulesetResults(self, matched_lines, matched_rules)
 
 
 def analyze(args):
@@ -271,15 +285,15 @@ def analyze(args):
                     continue
                 ruleset = RegularExpressionRuleSet(ruleset_dict)
                 if args.outfile:
-                    lines, processed_ruleset = ruleset.process(text)
-                    matched_lines.update(lines)
+                    processed_ruleset = ruleset.process(text)
+                    matched_lines.update(processed_ruleset.lines)
                     rulesets.append(processed_ruleset)
                 else:
                     ruleset.process_and_print(text)
         if empty_mask:
             logger.warn('No files matching "{0}" found'.format(mask))
     if args.outfile:
-        json_results = { 'rulesets': rulesets }
+        json_results = { 'rulesets': [r.to_dict() for r in rulesets] }
         if args.reftext:
             import hashlib
             json_results['text'] = {
