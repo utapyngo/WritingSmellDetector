@@ -1,0 +1,130 @@
+body {
+    font-family: Calibri, Tahoma, Arial;
+}
+
+h1 {
+    text-align: center;
+    margin: 0px;
+    padding: 15px;
+}
+
+h2 {
+    margin-top: 0;
+    border-top: solid silver 2px;
+    padding-left: 30px;
+}
+
+h3 {
+    padding-left: 30px;
+}
+
+#text h1 {
+    text-align: left;
+    padding-left: 30px;
+}
+
+.pattern {
+    font-family: Consolas, Courier, monospace;
+    border: silver dotted 2px;
+    white-space: pre;
+}
+
+.match {
+    display: table-row;
+}
+
+.nummatches {
+    font-weight: bold;
+    color: silver;
+    padding-left: 20px;
+    padding-right: 20px;
+    float: right; 
+    width: 10%;
+    text-align: right;
+}
+
+.line {
+    display: table-cell;
+    font-family: Consolas, Courier, monospace;
+}
+
+.lineno {
+    display: table-cell;
+    text-align: right;
+    padding-right: 10px;
+    color: gray;
+}
+
+.line-container {
+    display: table-row;
+}
+
+.replace {
+    display: table-row;
+}
+
+.replace > .key {
+    display: table-cell;
+    text-align: right;
+}
+
+.replace > .value {
+    display: table-cell;
+    text-align: left;
+}
+
+.replace > .arrow {
+    display: table-cell;
+    font-family: Consolas, Courier, monospace;
+    text-align: center; 
+}
+
+.spoiler-head {
+    cursor: pointer;
+}
+
+.spoiler-body {
+    overflow: hidden;
+}
+
+.spoiler-head.folded > h2 {
+    border-right: silver double 3px;
+}
+
+.spoiler-head.unfolded > h2 {
+    border-right: none;
+}
+
+.spoiler-head > h1 {
+    background-color: #eee;
+    -moz-border-radius-topleft: 15px;
+    -moz-border-radius-topright: 15px;
+}
+
+.spoiler-wrap.level1 {
+    border: silver solid 1px;
+    -moz-border-radius-topleft: 15px;
+    -moz-border-radius-topright: 15px;
+}
+
+.sidecollapse {
+    display: block;
+    float: left;
+    width: 20px;
+    background-color: #eee;
+    cursor: pointer;
+}
+
+.tools a {
+    color: silver;
+    cursor: pointer;
+}
+
+.tools .lsep {
+    color: silver;
+}
+
+.tools a:hover {
+    color: white;
+    background-color: silver;
+}

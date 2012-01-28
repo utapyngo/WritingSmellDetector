@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+  <head>
+    <title>Writing Smell Detector</title>
+    <script src="http://code.jquery.com/jquery-1.6.2.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      //<![CDATA[
+      jQuery(document).ready(function() {
+        jQuery.fn.maximizeHeight = function() {
+          $(this).each(function() {
+            $(this).css({
+              'min-height' : 0
+            });
+            var h = $(this).parent().height();
+            if($(this).height() < h) {
+              $(this).css({
+                'min-height' : h
+              });
+            };
+          });
+        };
+        jQuery.fn.scrollTo = function() {
+          var x = $(this).offset().top - 100;
+          $('html,body').animate({
+            scrollTop : x
+          }, 500);
+        };
+        jQuery.fn.toggleSpoiler = function(scroll) {
+          $(this).each(function() {
+            var header = $(this).toggleClass("folded").toggleClass("unfolded");
+            if(header.is('.folded')) {
+              header.next().hide();
+            } else {
+              header.next().show();
+            }
+            if(scroll) {
+              $(this).scrollTo();
+            }
+          });
+          $('.sidecollapse').maximizeHeight();
+        };
+        // hide all folded spoilers
+        $('.spoiler-head.folded').next().hide();
+        $('.spoiler-head').click(function() {
+          $(this).toggleSpoiler(true);
+        });
+        // create a side div to fold large spoilers
+        $('.spoiler-wrap.level1 > .spoiler-body').prepend('<div class="sidecollapse">&nbsp;</div>');
+        $('.spoiler-body .sidecollapse').click(function() {
+          var header = $(this).parent().prev();
+          header.toggleSpoiler(true);
+        });
+        $('.sidecollapse').maximizeHeight();
+      })
+      //]]
+    </script>
+    {% if css is defined %}
+    <style type="text/css">
+        <!--
+        {{ css }}
+        -->
+    </style>
+    {% else %}
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    {% endif %}
+  </head>
+  <body>
+    <div class="tools">
+      <a onclick="$('.spoiler-wrap.level1 > .spoiler-head.unfolded').toggleSpoiler();">Collapse all</a>
+      <span class="lsep">|</span>
+      <a onclick="$('.spoiler-wrap.level1 > .spoiler-head.folded').toggleSpoiler();">Expand all</a>
+    </div>
+    <div id="rulesets">
+      {% for ruleset in rulesets %}
+      <div class="spoiler-wrap level1" id="rulesets-{{ loop.index }}">
+        {% if ruleset.nummatches %}
+        <div class="spoiler-head unfolded">
+          <h1>{{ ruleset.ruleset.name }} <span class="nummatches">{{ ruleset.nummatches }}</span></h1>
+        </div>
+        {% else %}
+        <div class="spoiler-head folded">
+          <h1>{{ ruleset.ruleset.name }} <span class="nummatches">{{ ruleset.nummatches }}</span></h1>
+        </div>
+        {% endif %}
+        <div class="spoiler-body">
+          {% if ruleset.ruleset.comments %}
+          {% for comment in ruleset.ruleset.comments %}
+          <p>
+            {{ comment|e }}
+          </p>
+          {% endfor %}
+          {% endif %}
+          <div class="tools">
+            <a onclick="$('.spoiler-wrap > .spoiler-head.unfolded', $(this).parent().parent()).toggleSpoiler();">Collapse all</a>
+            <span class="lsep">|</span>
+            <a onclick="$('.spoiler-wrap > .spoiler-head.folded', $(this).parent().parent()).toggleSpoiler();">Expand all</a>
+          </div>
+          {% for rule in ruleset.rules %}
+          <div class="spoiler-wrap">
+            {% if rule.nummatches %}
+            <div class="spoiler-head unfolded">
+              <h2>Rule: {{ rule.rule.name|e }} <span class="nummatches">{{ rule.nummatches }}</span></h2>
+            </div>
+            {% else %}
+            <div class="spoiler-head folded">
+              <h2>Rule: {{ rule.rule.name|e }} <span class="nummatches">{{ rule.nummatches }}</span></h2>
+            </div>
+            {% endif %}
+            <div class="spoiler-body">
+              {% if rule.rule.comments %}
+              {% for comment in rule.rule.comments %}
+              <p>
+                {{ comment|e }}
+              </p>
+              {% endfor %}
+              {% endif %}
+              {% if rule.rule.re.iteritems is defined %}
+              <div class="replaces">
+                {% for k, v in rule.rule.re.iteritems() %}
+                <div class="replace">
+                  <span class="key">{{ k|e }}</span>
+                  <span class="arrow">-></span>
+                  <span class="value">{{ v|e }}</span>
+                </div>
+                {% endfor %}
+              </div>
+              {% endif %}
+              {% for pattern in rule.rule.patterns %}
+              <div class="spoiler-wrap">
+                {% set nummatches = rule.pattern_matches[pattern.original]|default({})|length %}
+                {% if nummatches %}
+                <div class="spoiler-head unfolded">
+                  <h3>Pattern: <span class="pattern">{{ pattern.original|e }}</span><span class="nummatches">{{ nummatches }}</span></h3>
+                </div>
+                {% else %}
+                <div class="spoiler-head folded">
+                  <h3>Pattern: <span class="pattern">{{ pattern.original|e }}</span><span class="nummatches">{{ nummatches }}</span></h3>
+                </div>
+                {% endif %}
+                <div class="spoiler-body">
+                  {% if rule.pattern_matches.has_key(pattern.original) %}
+                  {% for lineno in rule.pattern_matches[pattern.original].keys() | sort %}
+                  <div class="match">
+                    <span class="lineno">
+                      <a href="#line-{{ lineno }}"
+                        onclick="jQuery('#text .spoiler-wrap .spoiler-head.folded').toggleSpoiler()">
+                        {{ lineno }}
+                      </a>
+                    </span>
+                    {% set matches = rule.pattern_matches[pattern.original][lineno] %}
+                    {% set chunks = [lines[lineno]] %}
+                    {% set offset = 0 %}
+                    {% for m in matches %}
+                      {% set s = m[0] - offset %}
+                      {% set e = m[1] - offset %}
+                      {% set l = chunks.pop() %}
+                      {% if chunks.append(l[:s]) %}{% endif %}
+                      {% if chunks.append('<b>' + l[s:e] + '</b>') %}{% endif %}
+                      {% if chunks.append(l[e:]) %}{% endif %}
+                      {% set offset = offset + (l|length - chunks[-1]|length) %}
+                    {% endfor %} <span class="line">{{ chunks|join }}</span>
+                  </div>
+                  {% endfor %}
+                  {% else %}
+                  <p>
+                    No matches
+                  </p>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div id="text">
+      <div class="spoiler-wrap level1">
+        <div class="spoiler-head folded">
+          <h1>Text</h1>
+        </div>
+        <div class="spoiler-body">
+          {% for line in text.split('\n') %}
+          <div class="line-container">
+            <span class="lineno">{{ loop.index }}</span>
+            <span class="line"><a id="line-{{ loop.index }}">{{ line|e }}</a></span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

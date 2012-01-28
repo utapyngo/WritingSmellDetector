@@ -47,8 +47,9 @@ class TestRegularExpressionRule(unittest.TestCase):
         self.assertEqual(result.lines, { 1: self.text })
         self.assertEqual(result.pattern_matches,
             {
-                self.expr:
-                [(1, 0, 4), (1, 5, 9)]
+                self.expr: {
+                    1: [(0, 4), (5, 9)]
+                }
             }
         )
 
@@ -76,14 +77,15 @@ class TestRegularExpressionRuleSet(unittest.TestCase):
     def test_process(self):
         result = self.ruleset.process(self.text)
         self.assertEqual(result.lines, { 1: self.text })
-        self.assertEqual(len(result.matched_rules), 1)
-        processed_rule = result.matched_rules[0]
+        self.assertEqual(len(result.rules), 1)
+        processed_rule = result.rules[0]
         self.assertEqual(processed_rule.rule.data, self.rule_data)
         self.assertEqual(result.ruleset.data, self.data)
         self.assertEqual(processed_rule.pattern_matches,
             {
-                self.expr:
-                [(1, 0, 4), (1, 5, 9)]
+                self.expr: {
+                    1: [(0, 4), (5, 9)]
+                }
             }
         )
 
