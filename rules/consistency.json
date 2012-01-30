@@ -25,7 +25,7 @@
         {
             "name": "Improper Latinate Express",
             "comments": [
-                "Use e.g. to mean \"for example\", and i.e. to mean \"that is\""
+                "Use e.g. to mean \"for example\", and i.e. to mean \"that is\"."
             ],
             "re": [
                 "i\\.e\\.",

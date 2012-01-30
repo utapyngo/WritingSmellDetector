@@ -2,8 +2,8 @@
     "ruleset": "Nominalizations",
     "type": "re",
     "comments": [
-        "The subjects of the sentences name the cast of characters",
-        "The verbs that go with those subjects name the crucial actions those characters are part of"
+        "The subjects of the sentences name the cast of characters.",
+        "The verbs that go with those subjects name the crucial actions those characters are part of."
     ],
     "prefix": "\\b",
     "suffix": "\\b",
@@ -21,7 +21,14 @@
                 "were \\w+",
                 "it was \\w+",
                 "\\w+ly",
-                "(for the reason that|due to the fact that|owing to the fact that|in light of the fact that|considering the fact that|on the grounds that|this is why|the reason for)"
+                "for the reason that",
+                "due to the fact that",
+                "owing to the fact that",
+                "in light of the fact that",
+                "considering the fact that",
+                "on the grounds that",
+                "this is why",
+                "the reason for"
             ]
         }
     ]

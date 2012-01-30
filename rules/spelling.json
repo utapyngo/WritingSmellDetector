@@ -55,7 +55,21 @@
         {
             "name": "Meaningless Modifiers",
             "re": [
-                "kind of", "really", "basically", "definitely", "practically", "actually", "virtually", "generally", "certain", "particular", "individual", "given", "various", "specific", "for all intents and purposes"
+                "kind of",
+                "really",
+                "basically",
+                "definitely",
+                "practically",
+                "actually",
+                "virtually",
+                "generally",
+                "certain",
+                "particular",
+                "individual",
+                "given",
+                "various",
+                "specific",
+                "for all intents and purposes"
             ]
         }
     ]

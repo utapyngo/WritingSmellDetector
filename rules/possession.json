@@ -5,20 +5,20 @@
     "rules": [
         {
             "comments": [
-                "Do not use the apostrophe when creating plurals (i.e., Joneses, not Jones's)",
-                "Use ' s after singular nouns and indefinite pronouns that do not end and after plural nouns that do not end in s"
+                "Do not use the apostrophe when creating plurals (i.e., Joneses, not Jones's).",
+                "Use ' s after singular nouns and indefinite pronouns that do not end and after plural nouns that do not end in s."
             ],
             "re": "\\w+'s"
         },
         {
             "comments": [
-                "Use an apostrophe after plural nouns ending in s"
+                "Use an apostrophe after plural nouns ending in s."
             ],
             "re": "\\w+s's"
         },
         {
             "comments": [
-                "Do not use the apostrophe in the possessive pronouns hers, its, ours, yours and theirs"
+                "Do not use the apostrophe in the possessive pronouns hers, its, ours, yours and theirs."
             ],
             "prefix": "\\b",
             "suffix": "\\b",
