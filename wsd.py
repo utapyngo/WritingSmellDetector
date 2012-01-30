@@ -3,6 +3,7 @@
 
 import re
 import math
+import json
 
 import logging
 logger = logging.getLogger(__name__)
@@ -21,17 +22,11 @@ class Rule(object):
     def process(self, text):
         pass
 
-    def process_and_print(self, text):
-        pass
-
 
 class RuleSet(object):
     '''Set of rules'''
 
     def process(self, text):
-        pass
-
-    def process_and_print(self, text):
         pass
 
 
@@ -78,7 +73,7 @@ class ProcessedRulesets(object):
             d['lines'] = self.lines
         return d
         
-    def to_html(self):
+    def to_html(self, embed_css=True):
         import os
         from jinja2 import Environment, FileSystemLoader
         loader = FileSystemLoader(
@@ -86,9 +81,62 @@ class ProcessedRulesets(object):
         env = Environment(loader=loader)
         template = env.get_template('template.html')
         return template.render(rulesets=self.rulesets,
-                               lines=self.lines,
-                               text=self.text,
-                               css=loader.get_source(env, 'style.css')[0])
+            lines=self.lines,
+            text=self.text,
+            css=loader.get_source(env, 'style.css')[0] if embed_css else None)
+        
+    def to_console(self):
+        # max number of digits in line number
+        line_number_max_digits = int(math.ceil(math.log10(self.text.count('\n') + 1)))
+        
+        def print_line(line, lineno):
+            for i, chunk in enumerate(line.strip().split('\n')):
+                print('{1:>{0}}: {2}'.format(line_number_max_digits, lineno + i, chunk))
+               
+        for ruleset in self.rulesets:
+            print
+            print
+            print '            {0} ({1})'.format(ruleset.ruleset.name, ruleset.nummatches)
+            if ruleset.ruleset.comments: 
+                for comment in ruleset.ruleset.comments:
+                    print comment
+            for rule in ruleset.rules:
+                print
+                print '        Rule: {0} ({1})'.format(rule.rule.name, rule.nummatches)
+                if rule.rule.comments:
+                    for comment in rule.rule.comments:
+                        print comment
+                if rule.rule.prefix:
+                    print '        Prefix:', rule.rule.prefix
+                if rule.rule.suffix:
+                    print '        Suffix:', rule.rule.suffix
+                for pattern in rule.rule.patterns:
+                    p = pattern['original']
+                    matched_lines = rule.pattern_matches.get(p, {})
+                    nummatches = len(matched_lines)
+                    print
+                    print '    Pattern: {0} ({1})'.format(p, nummatches)
+                    if hasattr(rule.rule.re, 'iteritems'):
+                        print '    Replace:', rule.rule.re[p]
+                    for lineno in sorted(matched_lines.keys()):
+                        linespan, matches = matched_lines[lineno]
+                        data = ''
+                        for i in range(linespan):
+                            data += self.lines[lineno+i] + '\n'
+                        offset = 0
+                        chunks = [{ 'data': data }]
+                        for m in matches:
+                            s = m[0] - offset
+                            e = m[1] - offset
+                            l = chunks.pop()['data']
+                            chunks.append({ 'bold': False, 'data': l[:s] })
+                            chunks.append({ 'bold': True, 'data': l[s:e] })
+                            chunks.append({ 'bold': False, 'data': l[e:] })
+                            offset = offset + (len(l) - len(chunks[-1]['data']))
+                        for chunk in chunks:
+                            if chunk['bold']:
+                                chunk['data'] = '*' + chunk['data'] + '*'
+                        print_line(''.join([c['data'] for c in chunks]), lineno)
 
 
 def process_flags(flags, default=0):
@@ -177,10 +225,12 @@ class RegularExpressionRule(Rule):
                 add_line(line, lineno)
                 # location of the match relative to current line
                 lstart, lend = start - linestart, end - linestart
+                linespan = line.strip().count('\n') + 1
                 if rmatches.has_key(lineno):
-                    rmatches[lineno].append((lstart, lend))
+                    rmatches[lineno][0] = linespan
+                    rmatches[lineno][1].append((lstart, lend))
                 else:
-                    rmatches[lineno] = [(lstart, lend)]
+                    rmatches[lineno] = [linespan, [(lstart, lend)]]
             if rmatches:
                 pattern_matches[pattern['original']] = rmatches
         return ProcessedRule(self, matched_lines, pattern_matches)
@@ -269,9 +319,21 @@ class RegularExpressionRuleSet(RuleSet):
             processed_rule = rule.process(text)
             matched_lines.update(processed_rule.lines)
             matched_rules.append(processed_rule)
-            #if processed_rule.pattern_matches:
-            #    rules.append((rule, processed_rule.pattern_matches))
         return ProcessedRuleset(self, matched_lines, matched_rules)
+
+
+class IterableEncoder(json.JSONEncoder):
+    '''
+    JSON encoder which supports encoding iterables.
+    '''
+    def default(self, o):
+        try:
+            iterable = iter(o)
+        except TypeError:
+            pass
+        else:
+            return list(iterable)
+        return super(IterableEncoder, self).default(o)
 
 
 def analyze(args):
@@ -315,16 +377,14 @@ def analyze(args):
                     logger.error("In file: " + rule_file)
                     continue
                 ruleset = RegularExpressionRuleSet(ruleset_dict)
-                if args.outfile:
-                    processed_ruleset = ruleset.process(text)
-                    matched_lines.update(processed_ruleset.lines)
-                    rulesets.append(processed_ruleset)
-                else:
-                    ruleset.process_and_print(text)
+                processed_ruleset = ruleset.process(text)
+                matched_lines.update(processed_ruleset.lines)
+                rulesets.append(processed_ruleset)
         if empty_mask:
             logger.warn('No files matching "{0}" found'.format(mask))
+            
+    p = ProcessedRulesets(rulesets, matched_lines, text)
     if args.outfile:
-        p = ProcessedRulesets(rulesets, matched_lines, text)
         if args.output_format == 'json':
             if args.reftext:
                 json_results = p.to_dict(False)
@@ -335,10 +395,13 @@ def analyze(args):
                 }
             else:
                 json_results = p.to_dict(True)                
-            json.dump(json_results, open(args.outfile, 'wb'), indent=args.indent)
+            json.dump(json_results, open(args.outfile, 'wb'),
+                      indent=args.indent, cls=IterableEncoder)
         elif args.output_format == 'html':
-            open(args.outfile, 'wb').write(p.to_html())
+            open(args.outfile, 'wb').write(p.to_html(not args.no_embed_css))
         logger.info('Results saved to: {0}'.format(args.outfile))
+    else:
+        p.to_console()
   
 
 if __name__ == '__main__':
@@ -351,15 +414,19 @@ if __name__ == '__main__':
     parser.add_argument('ruleset', type=str, nargs='*',
         help='ruleset file')
     export = parser.add_argument_group('export')
+    html_group = parser.add_argument_group('html')
+    json_group = parser.add_argument_group('json')
     export.add_argument('-o', '--outfile', action='store',
         help='output file name')
-    export.add_argument('-f', '--output-format', default='json', choices=('json', 'html'),
-        help='output format')
-    export.add_argument('-r', '--reftext', action='store_true',
-        help='insert a reference to the text file into the output json file instead of a list of matching lines')
-    export.add_argument('-a', '--abspath', action='store_true',
+    export.add_argument('-f', '--output-format', default='html', choices=('json', 'html'),
+        help='output file format')
+    html_group.add_argument('-nec', '--no-embed-css', action='store_true',
+        help="don't embed style.css into generated html file")
+    json_group.add_argument('-r', '--reftext', action='store_true',
+        help='insert a reference to the text file into the output json file instead of the list of matching lines')
+    json_group.add_argument('-a', '--abspath', action='store_true',
         help='insert absolute path to the text file into the output json file  instead of the path passed to command line')
-    export.add_argument('-i', '--indent', type=int, action='store', default=4,
+    json_group.add_argument('-i', '--indent', type=int, action='store', default=4,
         help='json indent size')
     try:
         args = parser.parse_args()

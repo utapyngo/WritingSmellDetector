@@ -48,7 +48,7 @@ class TestRegularExpressionRule(unittest.TestCase):
         self.assertEqual(result.pattern_matches,
             {
                 self.expr: {
-                    1: [(0, 4), (5, 9)]
+                    1: [1, [(0, 4), (5, 9)]]
                 }
             }
         )
@@ -84,7 +84,7 @@ class TestRegularExpressionRuleSet(unittest.TestCase):
         self.assertEqual(processed_rule.pattern_matches,
             {
                 self.expr: {
-                    1: [(0, 4), (5, 9)]
+                    1: [1, [(0, 4), (5, 9)]]
                 }
             }
         )
