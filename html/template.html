@@ -74,22 +74,24 @@
       {% for ruleset in rulesets %}
       <div class="spoiler-wrap level1" id="rulesets-{{ loop.index }}">
         {% if ruleset.nummatches %}
-        <div class="spoiler-head unfolded">
-          <h1>{{ ruleset.ruleset.name }} <span class="nummatches">{{ ruleset.nummatches }}</span></h1>
-        </div>
+          <div class="spoiler-head unfolded">
+            <h1>{{ ruleset.ruleset.name }} <span class="nummatches">{{ ruleset.nummatches }}</span></h1>
+          </div>
         {% else %}
-        <div class="spoiler-head folded">
-          <h1>{{ ruleset.ruleset.name }} <span class="nummatches">{{ ruleset.nummatches }}</span></h1>
-        </div>
+          <div class="spoiler-head folded">
+            <h1>{{ ruleset.ruleset.name }} <span class="nummatches">{{ ruleset.nummatches }}</span></h1>
+          </div>
         {% endif %}
         <div class="spoiler-body">
-          {% if ruleset.ruleset.comments %}
-          {% for comment in ruleset.ruleset.comments %}
-          <p>
-            {{ comment|e }}
-          </p>
-          {% endfor %}
-          {% endif %}
+          <div class="ruleset-props">
+            {% if ruleset.ruleset.comments %}
+              {% for comment in ruleset.ruleset.comments %}
+              <div class="comment">
+                {{ comment|e }}
+              </div>
+              {% endfor %}
+            {% endif %}
+          </div>
           <div class="tools">
             <a onclick="$('.spoiler-wrap > .spoiler-head.unfolded', $(this).parent().parent()).toggleSpoiler();">Collapse all</a>
             <span class="lsep">|</span>
@@ -107,24 +109,25 @@
             </div>
             {% endif %}
             <div class="spoiler-body">
-              {% if rule.rule.comments %}
-              {% for comment in rule.rule.comments %}
-              <p>
-                {{ comment|e }}
-              </p>
-              {% endfor %}
-              {% endif %}
-              {% if rule.rule.re.iteritems is defined %}
-              <div class="replaces">
-                {% for k, v in rule.rule.re.iteritems() %}
-                <div class="replace">
-                  <span class="key">{{ k|e }}</span>
-                  <span class="arrow">-></span>
-                  <span class="value">{{ v|e }}</span>
-                </div>
-                {% endfor %}
+              <div class="rule-props">
+                {% if rule.rule.comments %}
+                  {% for comment in rule.rule.comments %}
+                  <div class="comment">
+                    {{ comment|e }}
+                  </div>
+                  {% endfor %}
+                {% endif %}
+                {% if rule.rule.prefix %}
+                  <div>
+                    Prefix: <span class="prefix">{{ rule.rule.prefix|e }}</span>
+                  </div>
+                {% endif %}
+                {% if rule.rule.suffix %}
+                  <div>
+                    Suffix: <span class="suffix">{{ rule.rule.suffix|e }}</span>
+                  </div>
+                {% endif %}
               </div>
-              {% endif %}
               {% for pattern in rule.rule.patterns %}
               <div class="spoiler-wrap">
                 {% set nummatches = rule.pattern_matches[pattern.original]|default({})|length %}
@@ -138,33 +141,52 @@
                 </div>
                 {% endif %}
                 <div class="spoiler-body">
-                  {% if rule.pattern_matches.has_key(pattern.original) %}
-                  {% for lineno in rule.pattern_matches[pattern.original].keys() | sort %}
-                  <div class="match">
-                    <span class="lineno">
-                      <a href="#line-{{ lineno }}"
-                        onclick="jQuery('#text .spoiler-wrap .spoiler-head.folded').toggleSpoiler()">
-                        {{ lineno }}
-                      </a>
-                    </span>
-                    {% set matches = rule.pattern_matches[pattern.original][lineno] %}
-                    {% set chunks = [lines[lineno]] %}
-                    {% set offset = 0 %}
-                    {% for m in matches %}
-                      {% set s = m[0] - offset %}
-                      {% set e = m[1] - offset %}
-                      {% set l = chunks.pop() %}
-                      {% if chunks.append(l[:s]) %}{% endif %}
-                      {% if chunks.append('<b>' + l[s:e] + '</b>') %}{% endif %}
-                      {% if chunks.append(l[e:]) %}{% endif %}
-                      {% set offset = offset + (l|length - chunks[-1]|length) %}
-                    {% endfor %} <span class="line">{{ chunks|join }}</span>
+                  {% set p = pattern.original %}
+                  <div class="pattern-props">
+                    {% if rule.rule.re.iteritems is defined %}
+                      Replace: <div class="replace">{{ rule.rule.re[p]|e }}</div>
+                    {% endif %}
                   </div>
-                  {% endfor %}
+                  {% if rule.pattern_matches.has_key(p) %}
+                    {% for lineno in rule.pattern_matches[p].keys() | sort %}
+                    <div class="match">
+                      <span class="lineno">
+                        <a href="#line-{{ lineno }}"
+                          onclick="jQuery('#text .spoiler-wrap .spoiler-head.folded').toggleSpoiler()">
+                          {{ lineno }}
+                        </a>
+                      </span>
+                      {% set linespan, matches = rule.pattern_matches[p][lineno] %}
+                      {% set chunks = [{ 'data': '' }] %}
+                      {% for i in range(linespan) %}
+                        {% set x = chunks.pop().data %}
+                        {% if chunks.append({ 'data': x + lines[lineno+i] + '\n' }) %}{% endif %}
+                      {% endfor %}
+                      {% set offset = 0 %}
+                      {% for m in matches %}
+                        {% set s = m[0] - offset %}
+                        {% set e = m[1] - offset %}
+                        {% set l = chunks.pop().data %}
+                        {% if chunks.append({ 'bold': False, 'data': l[:s] }) %}{% endif %}
+                        {% if chunks.append({ 'bold': True, 'data': l[s:e] }) %}{% endif %}
+                        {% if chunks.append({ 'bold': False, 'data': l[e:] }) %}{% endif %}
+                        {% set offset = offset + (l|length - chunks[-1].data|length) %}
+                      {% endfor %}
+                      <span class="line">
+                      {% for chunk in chunks -%}
+                        {%- if chunk.bold -%}
+                          <strong>{{ chunk.data|e }}</strong>
+                        {%- else -%}
+                          {{ chunk.data|e }}
+                        {%- endif -%}
+                      {%- endfor %}
+                      </span>
+                    </div>
+                    {% endfor %}
                   {% else %}
-                  <p>
-                    No matches
-                  </p>
+                    <div class="no-matches">
+                      No matches
+                    </div>
                   {% endif %}
                 </div>
               </div>

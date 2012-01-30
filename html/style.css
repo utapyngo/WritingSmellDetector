@@ -14,7 +14,15 @@ h2 {
     padding-left: 30px;
 }
 
+.rule-props {
+    padding-left: 10px;
+}
+
 h3 {
+    padding-left: 30px;
+}
+
+.pattern-props, .no-matches {
     padding-left: 30px;
 }
 
@@ -23,7 +31,7 @@ h3 {
     padding-left: 30px;
 }
 
-.pattern {
+.pattern, .prefix, .suffix {
     font-family: Consolas, Courier, monospace;
     border: silver dotted 2px;
     white-space: pre;
@@ -97,14 +105,21 @@ h3 {
 
 .spoiler-head > h1 {
     background-color: #eee;
-    -moz-border-radius-topleft: 15px;
-    -moz-border-radius-topright: 15px;
 }
 
 .spoiler-wrap.level1 {
     border: silver solid 1px;
+}
+
+.spoiler-head > h1, .spoiler-wrap.level1 {
     -moz-border-radius-topleft: 15px;
     -moz-border-radius-topright: 15px;
+    -webkit-border-radius-topleft: 15px;
+    -webkit-border-radius-topright: 15px;
+    -khtml-border-radius-topleft: 15px;
+    -khtml-border-radius-topright: 15px;
+    border-radius-topleft: 15px;
+    border-radius-topright: 15px;
 }
 
 .sidecollapse {
