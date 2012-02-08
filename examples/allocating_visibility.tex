@@ -1,0 +1,883 @@
+\documentclass[prodmode,acmec]{acmsmall}
+%\documentclass[prodmode,acmec, draft]{acmsmall}
+
+\usepackage[ruled]{algorithm2e}
+%\usepackage{algorithm}
+\usepackage{algorithmic}
+\renewcommand{\algorithmcfname}{ALGORITHM}
+\SetAlFnt{\small}
+\SetAlCapFnt{\small}
+\SetAlCapNameFnt{\small}
+\SetAlCapHSkip{0pt}
+\IncMargin{-\parindent}
+
+\acmVolume{X}
+\acmNumber{X}
+\acmArticle{X}
+\acmYear{2012}
+\acmMonth{2}
+\usepackage[numbers]{natbib}
+
+%\usepackage{setspace}
+%\doublespacing
+
+% Document starts
+\usepackage{Sweave}
+\begin{document}
+
+% Page heads
+\markboth{Horton et al.}{The Allocation of Visibility on Two-Sided
+  Platforms}
+
+\title{The Allocation of Visibility on Two-Sided Platforms}
+
+\author{
+    JOHN J. HORTON 
+    \affil{oDesk Research}
+    JOHN GUNNAR CARLSSON 
+    \affil{University of Minnesota}
+    IOANNIS ANTONELLIS 
+    \affil{oDesk Research}
+    PANAGIOTIS PAPADIMITRIOU
+    \affil{oDesk Research}
+    GREG LITTLE 
+    \affil{oDesk Research}
+ }
+
+\begin{abstract} 
+  We consider the problem two-sided platforms face in allocating
+  visibility (such as page position in search results) to platform
+  participants when participants differ in allocation-relevant
+  ``merit.''  We highlight the problem using data collected from an
+  online labor market, showing that common ways of allocating
+  visibility readily leads to inefficient (and arguably unfair)
+  outcomes. We suggest several criteria for evaluating alternative
+  allocation methods, including monotonicity and continuity in
+  expected visibility with respect to merit, as well as a property we
+  label proportional equity.  We show how to construct allocations
+  with all of these properties, but we also show why this is likely to
+  prove infeasible in applications due to computational demands. As a
+  substitute, we propose the ``reverse tontine'' mechanism that has
+  several attractive properties that make it suitable for
+  applications.
+\end{abstract} 
+
+\category{J.4}{Social and Behavioral Sciences}{Economics}
+\category{J.m}{Computer Applications}{Miscellaneous}
+\terms{Human Factors, Economics}
+\keywords{Online Labor Markets, oDesk, Allocation Mechanisms}
+
+\acmformat{Horton, J., Carlsson, J., Antonellis, I., Papadimitriou,
+  P., Little, G. 2012. The Allocation of Visibility on Two-Sided
+  Platform} 
+
+\begin{bottomstuff}
+\end{bottomstuff}
+
+\maketitle
+
+\section{Introduction} 
+In traditional markets, buyers and sellers are responsible for making
+themselves visible to their would-be trading partners. Gaining
+visibility might require as little effort as showing up to trade at
+some specific time and place, or it might require a massive
+advertising campaign. Regardless, the market's allocation of
+visibility is de-centralized, arising from the decisions of many
+individual actors.\footnote{There seems to be no consensus on the
+  welfare properties of advertising. \cite{dixit1978advertising} argue
+  that under a range of plausible assumptions, advertising is socially
+  inefficient, though there are other works that take alternate views,
+  claiming it depends on a number of factors \cite{becker1993simple}.}
+By comparison, in electronic markets, visibility is inherently
+determined by the platform creators, as what is seen by users is set
+by the design choices and policies of the platform. This power to
+control visibility has not gone unnoticed or unexploited: the
+multi-billion dollar position-based online advertising industry
+\cite{varian2007position,edelman2005internet} is evidence for this
+point. However, many other sites forgo price mechanisms for allocating
+visibility, and even those that do use prices do not rely solely on
+them. For example, search engines draw a sharp distinction between
+``paid'' results and ``organic'' search results that are not
+determined by prices.
+
+Why do platforms not rely solely on prices to allocate visibility?
+There are several possible answers, but the general explanation is
+that individual platform member preferences and willingness to pay do
+not perfectly align with the platform's optimal strategy. One possible
+example is that selling visibility might undermine the credibility and
+thus the usefulness of the platform as a whole.  An historic example
+is the legal prohibition on ``Payola,'' or the practice of record
+companies paying DJ's to play certain songs. The platform might worry
+that those choosing to pay for position might be adversely selected,
+or the platform might want to secure some minimal level of visibility
+for all users, to ensure their continued participation and thus
+sufficient market liquidity.
+
+When a platform entirely forgoes prices, visibility is still
+allocated, but the allocation depends on some other criteria set by
+the platform.  For example, craigslist orders results within
+categories by time of posting, as does Amazon Mechanical Turk
+(MTurk).\footnote{Not surprisingly, this time-based ordering leads to
+  manipulation as participants try to increasing their visibility. See
+  \cite{chilton2010task} for a discussion of this phenomena on MTurk.}
+On other sites, returned results are often ordered based on some
+algorithmic notion of relevancy, such as tf-idf or PageRank
+\cite{page1999pagerank}.
+
+\subsection{The economic approach to allocation} 
+The allocation of visibility on a platform has clear analogies to the
+economic allocation problem, in that the platform has a number of
+slots that differ in their value and a number of items---people,
+websites, classifieds, etc.---that must be assigned to a slot. The
+economic literature on making these kinds of allocations in the
+absence of a price mechanism goes back to
+\cite{hylland1979efficient}. In the setting Hylland-Zeckhauser
+formulation, individuals have cardinal preferences, which they use to
+``buy'' probability shares, giving a bistochastic matrix which can be
+used to generate allocations.
+
+Subsequent work on the assignment problem has focused on cases where
+only ordinal preferences are known. The two main solutions in the
+literature are the random serial dictatorship and the probabilistic
+serial mechanism. In the serial dictatorship, each person is serially
+chosen at random and gets to make their preferred choice from the
+remaining choices. In the probabilistic serial mechanism proposed by
+\cite{bogomolnaia2001new}, every individual simultaneously ``eats''
+unit probability shares at a constant, common rate, with each
+individual starting at their preferred position. When an individual's
+current position is totally consumed, they move to their next best
+option until time runs out. \cite{budish2009implementing} gives a
+procedure for drawing allocations from the resultant bistochastic
+matrix. A growing literature in economics explores the properties of
+these allocation mechanisms, including their efficiency and
+strategy-proofness (or lack thereof)
+\cite{kojima2010incentives,manea2007serial,abdulkadiroglu1999house}.
+
+While the economic assignment problem provides a framework, the
+motivation for this paper---the allocation of visibility on two-sided
+platforms---has properties that make the standard economic approaches
+unattractive. One difference is that the economic literature is
+generally focused on cases where all individuals should be treated
+equally, whereas platforms almost always want to give more visibility
+to some select participants.
+
+As we explore the notion of treating different participants
+differently, it will be useful to have a more formal statement of the
+problem. Let us assume that we have $n$ individuals that we need to
+assign to $n$ slots. Each individuals has ``merit'' $b$, creating a
+vector of budgets, $\vec{b}$.  Each of the $n$ positions has a
+``value'' $v$ (i.e., an associated visibility) such that $v_1 > v_2 >
+v_3 \ldots v_n$. In this paper, we will be concerned solely with
+stochastic assignment mechanisms, i.e., a mechanisms that will place
+an individual $i$ at position $j$ with probability $p_{ij}$. We
+evaluate allocations based on the expected values they generate for an
+individual $i$, which we will call $x^n_i = \sum_{j=1}^n p_{ij}v_j$,
+as well as the distributional properties of the allocation
+mechanism. This formalization immediately highlights another important
+difference between this setting the common economic allocation
+setting: notice that the values associated with positions are not
+conditional, i.e., we are assuming that all individuals have identical
+ordinal preferences, with everyone preferring more visibility to
+less. As such, the serial dictatorship and the probabilistic
+dictatorship give identical results.\footnote{To see why, consider
+  that in the probabilistic serial mechanism case, all $n$ individuals
+  would start ``eating'' probability at the most valued position
+  (since this is every individual's first choice). Each would be able
+  to eat $1/n$ and then, all at once, all would move to position 2,
+  where they would eat $1/n$, and so on. The resultant bistochastic
+  matrix is identical to that generated by the serial dictatorship.}
+
+Another important difference between the classic economic allocation
+scenario and our setting is that the economic literature was motivated
+by one-off scenarios such as the assigment of students to schools,
+families to houses, kidneys to patients, etc. As such, there is a
+natural focus on the equity of the single realized allocation. In
+contrast, on platforms individuals can be re-allocated many hundreds
+of times per day, appearing in different orders in response to
+different queries. As such, expected visibility and the properties of
+the distributio of realized outcomes becomes more interesting and more
+important.  A final difference that is common to many (but not all)
+two-sided platforms is that the limited capacity of the platform
+participants suggests that frequent changes in ``merit'' should be
+made, so as to make sure the same over-exposed individuals do not
+continually appear at the top of the search results.
+
+\subsection{Practical importance of justice}
+Within two-sided platforms, the ``thing'' being allocated visibility
+is often not a website or a product but a person.  This is a
+non-trivial difference, as it gives a technical resource allocation
+problem an ethical dimension and as such, any choice by the platform
+creator is likely to generate strong emotions. Whether they perceive
+it that way or not, the platform creator is implicitely assigning
+visibility according to some notion of justice. This is likely to
+prove contentious. Aristotle wrote in Book V of his Nichomachean
+Ethics:
+\begin{quote}
+  [T]his is the origin of quarrels and complaints---when either equals
+  have and are awarded unequal shares, or unequals equal
+  shares. Further, this is plain from the fact that awards should be
+  ``according to merit''; for all men agree that what is just in
+  distribution must be according to merit in some sense, though they
+  do not all specify the same sort of merit...
+\end{quote} 
+We can easily achieve Aristotle's ideal when goods are divisible, but
+the problem becomes more challenging when goods (or ``bads'') are
+indivisible, e.g., jobs, unpleasant duties, artwork, custody of
+children, etc. An ancient solution to this dilemma is to introduce some
+randomization device like drawing lots.
+
+Pure randomization works well when all should be treated equally, but
+what if individuals are unequal? It then no longer seems fair to
+allocate by a lottery that treats individuals exactly the same (a
+point made by Aristotle). One attractive approach is to employ a
+simple serial dictatorship. Individuals are ranked by merit; the
+first-ranked individual gets their first choice, the second gets to
+pick from what is remaining, and so on until all choices are
+exhausted. This is actually the only mechanism that is fair and
+efficient, in the sense that a higher-ranked individual would never
+envy a lower-ranked individual \cite{balinski1999tale}.
+
+In a one-shot scenario, the simple serial dictatorship is an appealing
+solution, but if done repeatedly, with the same set of choices and the
+same set of individuals, it can easily run afoul of Aristotle's theory
+that equals should be treated equally, as well as his argument that
+rewards should be proportional to merit.
+
+To see the problem, suppose there are two individuals with budgets
+$b_1 = 0.8$ and $b_2 = 0.2$ that must be assigned to two positions
+that offer value (i.e., visibility) worth $v_1 = 80$ and $v_2 =
+20$. The simple serial dictatorship is the only obviously fair
+solution: the higher merit individual gets the higher value
+position. Further, the benefits are proportional to relative
+merit. However, as either the ratio of merits or ratio of position
+values change, the obviousness fairness of the simple serial
+dictatorship wanes: the higher merit person still gets the higher
+value position, but proportionality is lost. And no matter how close
+the two individuals become in merit, gap between their expected payoff
+does not diminish. Even when $b_1 = 1 + \epsilon$ and $b_2 = 1$,
+individual $1$ gets a (proportionally speaking) windfall of $30$ and
+individual $2$ loses $50$, no matter how small $\epsilon$.
+
+Intuitively, as $\epsilon$ gets smaller, the two individuals should
+each get $v_1$ and $v_2$ in approximately equal proportion. This of
+course means that sometimes the strictly lower-merit individual gets
+the top position, sacrificing fairness in one realization for a gain
+of fairness in expectation. We want the mechanism to capture the
+notion that likes should be treated alike, which in this case means
+that expected value is continuous in merit. It practically goes
+without saying, but expected value should also be monotonically
+non-decreasing in merit (i.e., an individual should never wish they
+had a smaller budget).
+
+\subsection{Rivalrousness and the need for frequent re-allocation} 
+In situations where search is returning information (e.g., websites,
+documents, etc.), there is no inherent problem with returning the same
+result to every user in response to the same query. This relatively
+static approach (with updates only made to reflect improved estimates
+of relevancy) works because the returned results are non-rivalrous
+goods: the effect of the marginal visitor on the remaining visitors is
+effectively zero, which means that every visitor can be shown the
+``best'' page without that page being consumed. While this
+non-rivalrousness is true of web pages, it is not true for many other
+things that might be returned from search, such as individual buyers
+and sellers.
+
+Rivalrousness becomes an issue when the returned results have limited
+capacity, which is characteristic of many two-sided platforms (e.g.,
+most individuals can only work 40 to 50 hours per week, go on so many
+dates, knit so many custom sweaters, etc.). The issue is that
+visibility in search tends to follow a power law distribution, with
+the top results getting a large fraction of the views and hence
+contacts by would-be buyers or sellers. The fire hose of attention can
+quickly exhaust the capacity of those on top. In short order, the the
+individuals getting the most visibility need it the least and
+searchers are quickly discouraged by the low response rate to their
+contacts. This characteristic makes it critical for applied purposes
+that budgets can be updated in nearly real-time.
+
+\subsection{Overview of the paper} 
+We propose characteristics than an assignment mechanism designed for
+repeated use should have: the expected value of assignment should be
+monotonically increasing in an individual's budget and the expected
+value should be continuous. Another attractive property is equity:
+namely that an individual's share of the value from search position
+should be proportional to their budget share.
+
+We show that when a collection of budgets and and values permits a
+solution to the equity criterion, we can construct such an assignment
+using an LP. By satisfying the equity criterion, we trivially are
+ensured continuity and monotonicity. However, we demonstrate that this
+implementation is likely to prove computationally infeasible for the
+types of platform applications motivating the paper. We instead
+propose a substitute which we call the ``reverse tontine'' (RT)
+mechanism, which has similarities to the simple serial dictatorship
+but still ensures continuity and monotonicity in merit. In fact, RT
+does better than monotonicity---the distribution of outcomes for a
+higher budget individual first-order stochastically dominates the
+outcomes for a lower budget individual. RT allocations can be
+generated very quickly and has limited memory requirements. It is also
+easy to update with changed budgets and position values, making it
+suitable for applications.
+ 
+
+
+\section{Allocating Visibility Equitably}
+In this section we show how to determine a collection of $n\times
+n$ permutation matrices $\Pi_{k}$, together with a collection of
+probabilities $\alpha_{k}$, such that the marginal probabilities
+$p_{ij}$ induced by the $\Pi_{k}$'s and the $\alpha_{k}$'s (that is,
+$p_{ij}=\sum_{k}\alpha_{k}\pi_{ij}^{k}$, where $\pi_{ij}^{k}$ denotes
+the $ij$th element of the matrix $\Pi_{k}$) satisfy the equity
+condition\[
+\frac{b_{i}}{\sum_{j}b_{j}}=\frac{\sum_{j}p_{ij}v_{j}}{\sum_{j}v_{j}}\,\]
+If no such collection exists (which we can also verify), we give a
+collection of permutation matrices whose equity is minimized in the
+least-squares sense, i.e. we find marginal probabilities $p_{ij}$ that
+minimize\[ \sum_{i}\left\Vert
+\frac{b_{i}}{\sum_{j}b_{j}}-\frac{\sum_{j}p_{ij}v_{j}}{\sum_{j}v_{j}}\right\Vert
+^{2}\,\] To simplify notation, we suppose without loss of generality
+that $\sum_{i}b_{i}=\sum_{j}v_{j}=1$ and therefore our equity
+condition is merely that $b_{i}=\sum_{j}p_{ij}v_{j}$ for all $i$. It
+is obvious that the matrix of marginal probabilities, $P$, should be
+the solution to the least-squares problem\[
+\mathrm{minimize}_{P}\left\Vert Pv-b\right\Vert _{2}^{2}\] which is
+easily solved using standard convex optimization methods (if desired
+one could also consider minimizing $\left\Vert Pv-b\right\Vert _{1}$
+or $\left\Vert Pv-b\right\Vert _{\infty}$, which can be done using
+linear programming). The optimal objective function value to the above
+problem is $0$ precisely when $P$ satisfies the equity criterion.
+
+Let $P^{*}$ denote the optimal solution to the least-squares problem;
+we now consider the problem of determining a collection of permutation
+matrices $\Pi_{1},\dots,\Pi_{K}$ and positive scalars $\alpha_{1},\dots,\alpha_{K}$
+such that the marginal probabilities induced by the $\Pi_{k}$'s are
+precisely the matrix $P^{*}$, i.e. that $p_{ij}^{*}=\sum_{k}\alpha_{k}\pi_{ij}^{k}$
+for all $i,j$. This is a straightforward application of a theorem
+of Birkhoff \cite{marcus}. The main idea is that if we are given
+an $n\times n$ doubly stochastic matrix $P$, there must exist an
+$n\times n$ permutation matrix $\Pi$ such that $\pi_{ij}=1$ implies
+that $p_{ij}>0$ (i.e. $\Pi$ only has $1$'s in entries whose corresponding
+value in $P$ is nonzero). If this is the case, we let $t$ be the
+minimum value of $P$ whose corresponding entry in $\Pi$ is $1$,
+i.e. \[
+t=\min_{i,j:\pi_{ij}=1}p_{ij}\,\]
+Clearly if $t=1$ then $P$ is a permutation matrix. If $t<1$ then
+the matrix $(1-t)^{-1}(P-t\Pi)$ has one fewer nonzero entry than
+$P$. We then perform this procedure recursively on the elements of
+$P$ (at most $(n-1)^{2}$ times) until $t=1$ and we are done; see
+Algorithm \ref{alg:find-equitable}.  Since Algorithm \ref{alg:find-equitable} requires that we solve a bipartite matching problem $\mathcal{O}(n^2)$ times, and since the Hungarian algorithm requires $\mathcal{O}(n^3)$ running time \cite{burkard2009assignment}, the overall complexity of Algorithm \ref{alg:find-equitable} is $\mathcal{O}(n^5)$.
+
+\begin{algorithm}
+\caption{Equity Criterion (EC). This algorithm takes as input a pair
+  of nonnegative $n$-vectors $b$ and $v$ such that
+  $\sum_{i}b_{i}=\sum_{j}v_{j}=1$ and outputs an $n\times n$ marginal
+  probability matrix $P^{*}$ that minimizes $\left\Vert
+  Pv-b\right\Vert _{2}^{2}$, as well as a collection
+  $\mathtt{Permutations}$ of at most $(n-1)^{2}$ permutation matrices
+  $\Pi_{k}$ and associated probabilities $\alpha_{k}$ such that
+  $P^{*}$ is the marginal probability matrix of the $\Pi_{k}$'s and
+  the $\alpha_{k}$'s, i.e. $p_{ij}^{*}=\sum_{k}\alpha_{k}\pi_{ij}^{k}$
+  for all $i,j$.  }
+\label{alg:find-equitable}
+\begin{algorithmic}
+\STATE Let $P^{*}$ be the probability matrix that minimizes $\left\Vert Pv-b\right\Vert _{2}^{2}$.
+\STATE \COMMENT{This can be found quickly using the method of least-squares.}
+\STATE Set $\bar{P}:=P^{*}$ and $\mathtt{Permutations}:=\emptyset$.
+\WHILE{$\bar{P}$ has more than $n$ nonzero entries}
+\STATE Let $Q$ be defined by $q_{ij}=\left\lceil p_{ij}\right\rceil $ (i.e.
+$Q$ has a $1$ in it whenever the corresponding entry of $P$ is
+nonzero).
+\STATE Solve a maximum-weight bipartite matching problem using the Hungarian
+algorithm \cite{burkard2009assignment} with the matrix $Q$ as an
+input. Let $\Pi$ denote the output assignment matrix.
+\STATE \COMMENT{By \cite{marcus} it must be the case that $\pi_{ij}=1$
+implies that $p_{ij}>0$ for all $i,j$.}
+\STATE Set $\mathtt{Permutations}:=\mathtt{Permutations}\cup\Pi$.
+\STATE Set $t=\min_{i,j:\pi_{ij}=1}p_{ij}$.
+\STATE Set $\bar{P}:=(1-t)^{-1}(\bar{P}-t\Pi)$.
+\STATE \COMMENT{By \cite{marcus} it must be the case that this reduces the
+number of nonzero entries of $\bar{P}$ by at least one.}
+\ENDWHILE
+\STATE \COMMENT{At this point we now know that $P^{*}$ is a convex combination
+of the matrices $\Pi$ in $\mathtt{Permutations}$; we can merely
+recover the weighting of the matrices using convex optimization.}
+\STATE Let $K:=\left|\mathtt{Permutations}\right|$. Let $\alpha_{1},\dots,\alpha_{K}$
+be the solution to the convex optimization problem\begin{eqnarray*}
+\mathrm{minimize}_{\alpha_{1},\dots,\alpha_{K}}\left\Vert (\alpha_{1}\Pi_{1}+\cdots+\alpha_{K}\Pi_{K})-P^{*}\right\Vert _{2}^{2} &  & s.t.\\
+\sum_{k}\alpha_{k} & = & 1\\
+\alpha_{k} & \geq & 0\,\forall k\,.\end{eqnarray*}
+\RETURN $P^{*}$, $\mathtt{Permutations}$, and $\left\{ \alpha_{1},\dots,\alpha_{K}\right\} $.
+\end{algorithmic}
+\end{algorithm}
+\section{An Allocation Mechanism for Web-Scale Assignment Problems} 
+Algorithm \ref{alg:find-equitable}, or the Equitable Criterion (EC)
+algorithm shows that meeting the equity criterion is possible in some
+situations and gives a method of constructing the necessary
+bistochastic matrix. Further, by meeting the equity criterion, it
+gives us continuity in merit. However, in the platform applications
+that motivated the problem, this approach is likely to prove
+infeasible: we cannot solve an LP every time an individual's budget
+changes or even make draws from the bistochastic matrix.
+
+An algorithm we can use in applications should at least offer
+continuity and monotonicity in merit, and ideally equity. It should be
+easy to incorporate changes in $\vec{b}$ or $\vec{v}$ and deliver
+assignments as they are needed, in the order that they are likely to
+be needed, i.e., we can learn the first position before the second
+position and the second position before the third, and so on.
+
+One other desirable feature for the algorithm---a feature not usually
+seen as an important attribute---is conceptual simplicity, as it will
+make it easier for the individuals subject to the control of the
+algorithm to understand and hopefully support as just the resultant
+allocation. Distributive justice, which is what the algorithm is
+attempting to deliver, is only one kind of justice---there is also
+procedural justice \cite{rawls1999theory}, which is concerned with the
+transparency and fairness of the process. Being able to clearly
+explain to platform participants why they are appearing in search in
+way they can understand would be a potentially powerful advantage.
+
+\subsection{Reverse Tontine Mechanism}
+\label{sec:tontine}
+We propose a simple approach we call the ``Reverse Tontine" (RT) that
+is nearly identical to the simple serial dictatorship, except that the
+dictator $i$ at each step is chosen with probability
+$\frac{b_i}{\sum_j b_j}$, where $j$ indexes all the unallocated
+individuals in that step. The name was chosen because in this
+mechanism, it is desirable to ``die'' early (unlike an actual
+tontine), and when you die, your probability shares are distributed to
+``survivors.''
+
+\begin{algorithm} 
+\caption{Reverse Tontine (RT). This algorithm takes as input vectors
+  $\vec{b}$ of individual budgets shares and $\vec{v}$ of values. Both
+  vectors are of the same length. The algorithm returns an assignment
+  of individuals to values.}
+\label{alg:tontine}
+
+\begin{algorithmic}
+\WHILE{there are unassigned individuals} 
+\STATE Draw an individual $i$ with probability equal to their budget share,
+$b_i \left(\sum_j b_j\right)^{-1}$. 
+\STATE Assign individual $i$ to position $\max \vec
+v$. 
+\STATE Remove the drawn individual from $\vec b$ and the selected position
+from $\vec v$ 
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm} 
+
+
+Given the description of the Algorithm~\ref{alg:tontine}, one might
+worry that it would require $n-k$ re-normalizations of the budgets at
+step $k$, which combined with the steps needed to actually make the
+draws might make this approach computational
+unattractive. Fortunately, there is a simple and fast algorithm that
+requires no re-weighting and can generate draws with $n$ individuals
+in $\log_2 n$ steps. To do this, we first make the $n$ individuals
+the terminal nodes in a binary tree. We combine pairs of nodes, giving
+the parent node a value equal to the sum of the values of its
+children. Let $T$ be our resultant binary tree, which consists of
+nodes $t \in T$. The right and left children of a non-terminal node
+$t$ are $r(t)$ and $l(t)$, respectively. Each node has a value, $|t|$:
+if the node is terminal, then $|t_j| = b_j$, otherwise $|t_j| =
+|l(t_j)| + |r(T_j)|$. If a node is missing children, its value is just
+the value of its remaining child (if any).
+
+To sample an individual, we start at the root node, $t_0$. It has a
+value equal to the sum of all individual budgets. We draw a random
+number $\gamma \sim U[0,1]$. If $\gamma < \frac{|l(t_0)|}{|l(t_0)| +
+  |r(t_1)|}$, we move to the left child node; otherwise we move to the
+right. We then repeat the same procedure, using the values of the new
+nodes children. Once we reach a terminal node, we have the individual
+assigned to that position. We complete the process by moving back up
+the tree, ``repairing'' the values for each tree to reflect that the
+selected individual is no longer available for allocation.
+
+\begin{proposition}
+The binary tree draw method selects individuals proportional to their
+budget share.
+\end{proposition} 
+\begin{proof}  
+Let $b_i$ be the budget of a particular individual. They are selected
+iff a unique series of moves down the tree occurs, $m_1,m_2,\ldots
+m_k$ that generate a sequence of visited nodes $t_0t_1,t_2,\ldots t_k$
+(where $t_0$ is the root). The probability of this sequence occurring
+(and thus $b_i$ being selected) is:
+\begin{eqnarray*} 
+  Pr(b_i) = \frac{|t_1|}{|l(t_0)| + |r(t_0)|} \times
+  \frac{|t_2|}{|l(t_1)| + |r(t_1)|} \times \ldots \times
+  \frac{b_i}{|l(t_{k-1})| + |r(t_{k-1})|}
+\end{eqnarray*} 
+Because $|t_k| = |r(t_k)| + |l(t_k)|$, we can cancel all numerators
+and denominators except for the first denominator and the last
+numerator. This gives us $Pr(b_i) = \frac{b_i}{|l(t_0)| + |r(t_0)|}$,
+and since $|t_0| = \sum_j b_j$, $Pr(b_i) = \frac{b_i}{\sum_j b_j}$.
+\end{proof} 
+
+%\begin{prop} 
+%The computational complexity is $O(n \log n)$ and the memory
+%complexity is $O(n)$.
+%\end{prop} 
+%\begin{proof}
+%  TK.
+%\end{proof} 
+
+\begin{proposition}
+An individual's expected outcome from the RT mechanism is continuous
+in their budget share.
+\end{proposition}
+\begin{proof} 
+  
+  Let us first define notation for the expected value of an individual
+  with budget $b_i$ when there are $n$ other individuals as $x_n(b_i,
+  \vec{b}, \vec{v})$. We can proceed by induction. First, when $n=2$,
+  under the RT mechanism, with $b_1 > b_2$ and $v_1 > v_2$, we have
+  $x_2(b_1, \vec{b}, \vec{v}) = b_1v_1 + b_2v_2$ and $x_2(b_2,
+  \vec{b}, \vec{v}) = b_1v_1 + b_2v_2$. Both expected values are
+  linear functions of the respective budgets and hence
+  continuous. Now, we assume that $x_m(.)$ is continuous and consider
+  the $m+1$ case in which we add a new position $v'$ and a new
+  individual with budget $b'$.
+
+With a probability equal to his or her budget share, $b_i$ is selected
+immediately and receives $v^* = \max v \cup v'$. Let us denote that
+probability as $s_{m+1}(i) = \frac{b_i}{\sum_{b \in \vec{b} \cup b'}
+  b}$, which is continuous in $b_i$. If the individual $i$ does not
+get selected in that round, some other individual $k$ is selected,
+with probability $s_{m+1}(k)$. When that $k$ individual is selected,
+they remove $v^*$ from consideration and remove their budget,
+$b_k$. For each of the $k$ scenarios this generates, this leaves the
+individual $i$ facing an $m$-sized RT scenario. We can write the
+expected value recursively, as:
+
+
+\begin{equation*} 
+x_{m+1}(b_i, \vec{b} \cup b', \vec{v} \cup v') = 
+s_{m+1}(i) v^* + 
+\left(1- s_{m+1}(i) \right) 
+\sum_{k=1}^{m} s_{m+1}(k) x_m (b_i, \vec{b} \cup b' \setminus b_k, \vec{v} \cup v' \setminus v^*) 
+\end{equation*}
+
+
+We can see that $x_{m+1}()$ is a finite linear combination of
+continuous functions (recall that $x_{m}(.)$ is continuous by
+assumption) and hence is itself continuous.
+\end{proof} 
+
+\begin{proposition} 
+  The reverse tontine mechanism does not always satisfy the equity
+  criterion.
+\end{proposition} 
+\begin{proof}
+We can show this with a simple counter-example with $n=2$. The
+equitable allocation for $b_1 > b_2$ (with $b_1 + b_2 = 1$ and $v_1 >
+v_2$ is $\mathbf{E}[u_1] = b_1 \left(v_1 + v_2\right)$ while the
+weighted serial approach gives: $\mathbf{E}[u_1] = b_1 v_1 + b_2
+v_2$. For the two expectations to be equal, $b_1 = b_2$.
+\end{proof} 
+
+\begin{proposition} \label{prop:fosd}
+The distribution of outcomes for an individual first order
+stochastically dominates (FOSD) the distribution of outcomes for any
+other individual with a lower budget, facing the same collection of
+other individuals.
+\end{proposition}
+% http://en.wikipedia.org/wiki/Stochastic_dominance
+\begin{proof}
+  Assume that we have two individuals with budgets $b_h$ and $b_l$
+  respectively, with $b_h > b_l$. We want to compare the
+  distributions of the two individuals under RT. First, let us define
+  $S_m(b)$ as the expected sum of the budgets for the individuals
+  after $m$ individuals have already been selected, not including
+  individual with budget $b$. Choose any position $k$ such that $1 \le
+  k < n$.  We are interested in the probability that the individual
+  received a position $q \le k$ (and hence of higher value), which we
+  can think of as a cdf, $Pr(q \le k) = F(k; b)$. We can write the
+  probability of an individual being selected after $k$ as a function
+  of their budgets. For $b_h$, we have: 
+  \begin{equation*}
+    1 - F(k; b_l) = \left(1-b_l\right)\left(1-\frac{b_l}{S_1(b_l)}\right)
+    \ldots \left(1 - \frac{b_l}{S_k(b_l)} \right) 
+    \end{equation*} 
+whereas for $b_l$, we have: 
+     \begin{equation*}
+    1 - F(k; b_h) = \left(1-b_h\right)\left(1-\frac{b_h}{S_1(b_h)}\right)
+    \ldots \left(1 - \frac{b_h}{S_k(b_h)} \right) 
+    \end{equation*} 
+     
+Because $b_h > b_l$ and by the assumption that both the high and low
+individuals face the same collection of individuals, for all $k$,
+$S_k(b_h) = S_k(b_l)$, and hence $(1-b_h S_m(b_h)^{-1}) < (1-b_l
+S_m(b)^{-1})$, which means that every term of $1-F(k; b_h)$ is less
+than every term of $1-F(k; b_k)$ and thus the distribution of outcomes
+for $b_h$ FOSD $b_l$.
+\end{proof} 
+
+A direct implication of Proposition \ref{prop:fosd} is that any
+utility maximizer, regardless of attitude towards risk, would prefer
+to have a higher budget to a lower budget.
+
+\section{Experiments}
+\label{sec:expr}
+
+In this section we show that conventional approaches to ordering
+platform participants---statically ranking individuals based on some
+semi-permanent measure of relevancy, which we call assortive
+ranking---leads to radically unequal allocations of visibility. We do
+this using data from oDesk, a large online labor market. After
+illustrating the problem, we evaluate the algorithms presented earlier
+(EC and RT) through a series of simulations. We compare the algorithms
+in terms of running time and performance to determine whether they can
+be used in practice. We also assess how far RT deviates from the
+equity criterion, which is only guaranteed by EC.
+
+\subsection{Visibility allocation in a labor marketplace}
+\label{sec:expr-odesk}
+
+In this section we use data from the oDesk
+marketplace\footnote{http://www.odesk.com} to study how the visibility
+in search results reflects the merit of the individuals that
+participate in the results. oDesk is an online labor marketplace that
+provides employers of two different ways to find prospective
+contractors:
+\begin{enumerate}
+\item Employers can leverage a search interface that allows them to
+  retrieve contractor profiles that are relevant to some
+  keyword. Employers have the option to send an interview invitation
+  to any of the retrieved contractors.
+\item Employers may also wait for contractors to apply after they have
+  posted a job. When a contractor applies to a job, the associated
+  employer is notified via email. The employer reviews the contractor
+  profile and the application cover letter and decides whether to
+  invite the contractor to interview for the job.
+\end{enumerate}
+
+The two alternative ways to reach contractors allow us to obtain
+contractor visibility and merit estimates. In case of search, the way
+that oDesk ranks contractors makes them more or less visible to the
+employers. Thus, the profile views that the contractors receive
+through clicks on the search results are indicative of the visibility
+that oDesk provides them. In case of job applications, the email
+notification and the typically small number of applicants per job
+(around 10 applicants) makes it exceeedingly likely that the employer
+will view each of the applications and the corresponding
+profiles. Given that an employer views a profile, the probability of
+an interview invitation or the probability of hiring is indicative of
+the contractor's merit.
+
+%Zipf-Mandelbrot LNRE model.
+%Parameters:
+%   Shape:          alpha = 0.2884794 
+%   Upper cutoff:       B = 8.565862e-05 
+% [ Normalization:      C = 557.3199 ]
+%Population size: S = Inf 
+%Sampling method: Poisson, with exact calculations.
+%
+%Parameters estimated from sample of size N = 10465514:
+%                  V       V1       V2       V3       V4      V5    
+%   Observed: 233215 66207.00 19856.00 13163.00 10823.00 8839.00 ...
+%   Expected: 233215 75584.19 26889.86 15340.85 10399.26 7719.41 ...
+%
+%Goodness-of-fit (multivariate chi-squared test):
+%         X2 df p
+%   59884.04 14 0
+\begin{figure}[t]
+  \includegraphics[width=0.5\columnwidth]{../simulations/results/click_distribution.png}
+  \includegraphics[width=0.5\columnwidth]{../simulations/results/interviewrate_distribution.png}
+  \caption{(a) Click distribution per rank position in oDesk contractor
+    search. (left)\\ (b) Interview rate at oDesk over a period of eight months. (right)}
+  \label{fig:clicks}
+\end{figure}
+To estimate the visibility we use the oDesk contractor search logs
+over the period of two weeks of January. The log contains a record for
+every click on the search results and each record shows the position
+in search and the target contractor profile. In
+Figure~\ref{fig:clicks}(a) we plot the click distribution per search
+rank position in oDesk contractor search in double logarithmic
+scale. The number of clicks drops from approximately 60K in the first
+position to 15K in the second and around 200 in the tenth position
+(the last position of the first results page). We fitted a Zipfian
+distribution to the data and the estimated exponent is 1.35. Our
+results are similar to click distribution in traditional web search
+\cite{ali2007robust} and indicate dramatic decrease in visibility even
+for consecutive positions in search results. In the next paragraph we
+show that such distribution is not justified by the contractor merit
+distribution.
+
+%\begin{figure}[t]
+%  \includegraphics[width=0.4\columnwidth]{../simulations/results/interviewrate_distribution.png}
+%  \caption{Interview rate at oDesk over a period of eight months.}
+%  \label{fig:interviewrate}
+%\end{figure} 
+
+Any constructed measure of merit will be somewhat arbitrary and highly
+platform dependent. For oDesk, a reasonable measure of merit is a
+constractor's ``success rate'' in seeking jobs. We looked at the job
+application history at oDesk over a period of eight months (June 2011
+through January 2012) and we calculated each contractor's interview
+rate, defined as the ratio of his job applications that evolved into
+an interview over his or her total job applications in the period. In
+Figure~\ref{fig:clicks}(b) we plot the interview rate distribution in
+double logarithmic scale.
+
+By comparing the two Figures~\ref{fig:clicks}(a),(b) we can see how
+the search ranking imposes an artificial boost on visibility that is
+not justified from an individual's merit.  The gap between the two
+distrcibutions shows that there are many contractors who have almost
+equal success in convincing with their job applications employers to
+setup an interview but receive different visibility through the search
+interface.
+
+
+\subsection{Algorithm and ranking comparison}
+\label{sec:expr-comparison}
+In this section we compare the algorithms that we have presented in
+terms of runtime performance and the satisfaction of the equity
+condition. For our comparison we use synthetic data that capture
+different scenarios for the merit distribution across the
+population. In all of the scenarios we assume that the visibility in
+different rank positions follow the Zipfian distribution that we
+observed in Section~\ref{sec:expr-odesk}.
+
+
+\subsubsection{Runtime performance}
+\label{sec:expr-runtime}
+
+We compare the runtime performance of the EC algorithm
+(Algorithm~\ref{alg:find-equitable}) and two different variations of
+the RT algorithm (Algorithm~\ref{alg:tontine}). In the first
+variation, called \emph{naive} RT, we renormalize the weights of
+individuals after each assignment of an individual to a position. In
+the second variation, called \emph{tree-based} RT, we leverage the
+tree structure described in Section~\ref{sec:tontine}.
+
+The comparison setting is the following. For different sizes $n$ of
+the population we assign merit values to the individuals using uniform
+sampling in the range $[0,1]$ and we set the visibility of each of the
+$n$ search positions to follow a Zipfian distribution with exponent
+$1.35$. We do not report results for other distributions in this
+section, since our experiments showed that the distribution types have
+negligible impact on the algorithms performance. For each value of $n$
+we ran all of the three algorithms and we measured the runtime in
+seconds. 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.6\columnwidth]{../simulations/results/performance.png}
+  \caption{Runtime comparison of the three different assignment
+    algorithms.}
+  \label{fig:runtime}
+\end{figure} 
+We report the results in Figure~\ref{fig:runtime}. The x-axis shows
+the number of individuals in the population and the y-axis shows the
+time in logarithmic scale. There are three lines in the plot and each
+line looks at a different algorithm. The solid line looks at the
+tree-based RT, the dashed line looks at the naive RT, and the dotted
+line looks at the EC algorithm. The closer a line to the x-axis the
+better the algorithm. We observe that tree-based can rank up to $1000$
+individuals in much less than a second. The tree-based RT achieves
+also significantly faster runtime than the naive RT, which shows the
+benefits of the tree structure we use to expedite sampling. As far as
+the EC algorithm is concerned, we did not to run it for $n$ greater
+than $200$, since the $6$ hours it took to rank $200$ individuals
+convinced us that it cannot be used in practice. To summarize, the
+tree-based RT algorithm is much faster than the other algorithms and
+its runtime make it practical for real-world scenarios.
+
+
+\subsubsection{Equitable visibility approximation}
+\label{sec:expr-approximation}
+Although we showed that the RT algorithm is fast enough to be applied
+to real-world scenarios, we have not still evaluated its impact on the
+visibility allocation problem. Recall that the algorithm does not
+yield equitable visibility in the general case as the EC algorithm
+does. However, the RT algorithm ensures continuity and monotonicity in
+merit, two properties that are missing from the vanilla assortative
+ranking.
+
+In this section we compare the assortative ranking, and the rankings
+obtained from the RT and the EC algorithms in terms of their
+visibility allocation for different merit distributions. To obtain
+different merit distribution we sample from the Pareto distribution
+with different $\alpha$ parameters. Recall that when $\alpha$ is
+large, the Pareto distribution approaches the Dirac distribution at
+point $1$. That means, that all of the sampled individuals' merits
+will be almost equal to $1$. As the value of parameter $\alpha$
+decreases, the merit values get spreaded out and finally the Pareto
+distribution becomes skewed. That is, it yields few individuals with
+extremely high merit values and many individuals with low merit
+values. To evaluate the effect of the different rankings across the
+spectrum of different Pareto distributions we used the following
+values for $\alpha$: $100$, $10$, $5$, $1$ and $0.5$. Although
+we use different merit distributions,we use in every case a Zipfian
+distribution with exponent $1.35$ to model the visibility distribution
+over the search positions.
+
+For each distribution of merits we ran each of the algorithms $m$
+times to obtain the average visibility for each individual $\bar{v_i}$
+across the $m$ runs\footnote{We did not actually run the EC algorithm,
+  since it was theoretically shown to achieve equitable visibility
+  allocation}. To evaluate the success of the algorithms in achieving
+equitable visibility allocation, we use the root mean square error
+(RMSE) defined as:
+\[
+\sqrt{\frac{\sum_{i=1}^n\left(\frac{b_i}{\sum_{j=1}^n
+        b_j}-\frac{\bar{v_i}}{\sum_{j=1}^n \bar{v_j}}\right)^2}{n}}
+\]
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.6\columnwidth]{../simulations/results/approximation.png}
+  \caption{RMSE in the approximation of equitable allocation for the
+    three different ranking approaches. The contractor merits are
+    randomly sampled from a Pareto distribution with parameter $\alpha$.}
+  \label{fig:approximation}
+\end{figure} 
+We plot the results in Figure~\ref{fig:approximation} for
+$m=1000$. The x-axis shows the value of the Pareto distribution
+parameter and the y-axis shows the RSME. There are three lines in the
+plot and each looks at a different ranking approach. The solid line
+looks at the RT ranking, the dashed line looks at the assortative
+ranking and the dotted line looks at the estimated EC ranking. Note
+that RMSE is 0 for the EC ranking, since the EC algorithm is
+guaranteed to achieve equitable visibility allocation for any merit
+distribution. The assortative distribution has small RMSE for low
+values of $\alpha$, because in these case the merit distribution
+become similar to the Zipfian visibility distribution. However, the
+real-world data in Section~\ref{sec:expr-odesk} showed that these
+distributions are not similar. As $\alpha$ increases the assortative
+ranking yields significantly greater RMSE that the other ranking
+approaches. Finally, note that the RT ranking yields RMSE that is very
+close to $0$ for a wide range of $\alpha$ values. The RMSE increases
+for small values of $\alpha$ that yield distributions that were not
+observed in the oDesk dataset. Thus, we can conclude that the RT
+algorithm yields visibility that is close to the equitable allocation
+for practical cases. This result combined with its ability to scale
+make it an attractive option for real-world applications.
+
+
+\section{Conclusions and Future Work} 
+
+In this paper, we have defined a problem common to two-sided
+platforms, which is the allocation of visbility to platform
+participants. We have also demonstrated the problem using data from an
+actual online labor market. We described the relationship of this
+problem to the classic economic assignment problem and proposed a
+number of additional criteria for evaluating assignment mechanisms that
+are relevant in the platform/repeated assignment setting that we are
+focused on. We show that it is possible to create an assignment that
+satisfied the highly desirable ``equity'' criterion, using our RC
+algorithm, but also show that the standard solution is infeasible for
+web-scale applications.  As a substitute, we proposed an algorithm RT
+that has some nice properties that make it well-suited for
+applications, including reasonable approximation to the equity
+criterion. However, we hope that future work might demonstrate how
+this algorithm could be modified, perhaps by having some ``memory'' of
+past allocations to yield assignments that are equitable in
+expectation.
+
+
+\bibliographystyle{acmsmall}
+\bibliography{allocating_visibility.bib}
+
+
+\end{document}
