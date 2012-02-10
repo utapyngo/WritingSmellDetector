@@ -28,7 +28,7 @@ class TestRegularExpressionRule(unittest.TestCase):
         self.suffix = r'\b'
         self.rule_data = { 're': self.expr, 'flags': 'I' }
         self.rule = RegularExpressionRule(self.rule_data, self.prefix, self.suffix, default_flags, {})
-        self.text = 'Some text'
+        self.text = 'Some text\n    with spaces'
 
     def test_itermatches(self):
         x = list(self.rule.itermatches(self.text))
@@ -38,17 +38,21 @@ class TestRegularExpressionRule(unittest.TestCase):
         self.assertEqual(pattern['original'], self.expr)
         self.assertEqual(pattern['compiled'], re.compile(self.prefix + self.expr + self.suffix, flags))
         matches_list = list(matches)
-        self.assertEqual(len(matches_list), 2)
+        self.assertEqual(len(matches_list), 4)
         self.assertEqual(matches_list[0].span(), (0, 4))
         self.assertEqual(matches_list[1].span(), (5, 9))
+        self.assertEqual(matches_list[2].span(), (14, 18))
+        self.assertEqual(matches_list[3].span(), (19, 25))
 
     def test_process(self):
         result = self.rule.process(self.text)
-        self.assertEqual(result.lines, { 1: self.text })
+        lines = self.text.splitlines()
+        self.assertEqual(result.lines, { 1: lines[0], 2: lines[1] })
         self.assertEqual(result.pattern_matches,
             {
                 self.expr: {
-                    1: [1, [(0, 4), (5, 9)]]
+                    1: [1, [(0, 4), (5, 9)]],
+                    2: [1, [(4, 8), (9, 15)]]
                 }
             }
         )

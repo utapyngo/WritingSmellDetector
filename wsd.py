@@ -38,7 +38,7 @@ class ProcessedRule(object):
         self.lines = lines
         # dictionary of { pattern: [(lineno, start, end), ...] }
         self.pattern_matches = pattern_matches
-        self.nummatches = sum([len(m) for m in pattern_matches.itervalues()])
+        self.nummatches = sum(len(m) for m in pattern_matches.itervalues())
 
 
 class ProcessedRuleset(object):
@@ -47,7 +47,7 @@ class ProcessedRuleset(object):
         self.ruleset = ruleset
         self.lines = lines
         self.rules = rules
-        self.nummatches = sum([rule.nummatches for rule in rules])
+        self.nummatches = sum(rule.nummatches for rule in rules)
         
     def to_dict(self):
         result = self.ruleset.data.copy()
@@ -210,7 +210,7 @@ class RegularExpressionRule(Rule):
         pattern_matches = {}
 
         def add_line(line, lineno):
-            for i, chunk in enumerate(line.strip().split('\n')):
+            for i, chunk in enumerate(line.strip('\n').split('\n')):
                 matched_lines[lineno + i] = chunk
 
         for pattern, matches in self.itermatches(text):
@@ -234,57 +234,6 @@ class RegularExpressionRule(Rule):
             if rmatches:
                 pattern_matches[pattern['original']] = rmatches
         return ProcessedRule(self, matched_lines, pattern_matches)
-
-    def process_and_print(self, text):
-        '''Apply the rule to text and print the results'''
-
-        # max number of digits in line number
-        line_number_max_digits = int(math.ceil(math.log10(text.count('\n') + 1)))
-
-        def print_line(line, lineno):
-            for i, chunk in enumerate(line.strip().split('\n')):
-                print('{1:>{0}}: {2}'.format(line_number_max_digits, lineno + i, chunk))
-
-        print
-        if self.name or self.comments:
-            print 'Rule:', self.name
-        if self.comments:
-            for comment in self.comments:
-                print comment
-
-        if hasattr(self.re, 'iteritems'):
-            max_length = 1 + max([len(e) for e in self.re.iterkeys()])
-            for pattern, replacement in self.re.iteritems():
-                print '{1:>{0}} -> {2}'.format(max_length, pattern, replacement)
-
-        for pattern, matches in self.itermatches(text):
-            print
-            print 'Pattern: /{0}/'.format(pattern['original'])
-            found = False
-            line = None
-            plineno = None
-            for m in matches:
-                found = True
-                start, end = m.span()
-                lineno = text.count('\n', 0, start) + 1
-                if plineno is not None and lineno != plineno:
-                    # this is another line
-                    # print previous line
-                    print_line(line, plineno)
-                if plineno is None or lineno != plineno:
-                    # first iteration or other line
-                    linestart = text.rfind('\n', 0, start) + 1
-                    lineend = text.find('\n', end, -1)
-                    line = text[linestart:lineend] if lineend > 0 else text[linestart:]
-                # location of the match relative to current line
-                lstart, lend = start - linestart, end - linestart
-                line = line[:lstart] + '*' + line[lstart:lend] + '*' + line[lend:]
-                linestart -= 2
-                plineno = lineno
-            if found:
-                print_line(line, plineno)
-            else:
-                print "No matches"
 
 
 class RegularExpressionRuleSet(RuleSet):
@@ -345,7 +294,6 @@ def analyze(args):
     '''
     from glob import glob
     import os
-    import json
 
     if not args.ruleset:
         args.ruleset = [os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rules', '*')]
