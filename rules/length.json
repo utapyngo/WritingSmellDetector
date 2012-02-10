@@ -1,9 +1,7 @@
 {
     "ruleset": "Length",
     "type": "re",
-    "prefix": "\\b",
-    "suffix": "\\b",
-    "flags": "+SU",
+    "flags": "+SUI",
     "replace": {
         " ": "\\s+"
     },
@@ -11,8 +9,7 @@
         {
             "name": "Sentence length",
             "re": [
-                "([^\\.\\w]+\\w+){30}"
-//\\W+\\w+
+                "([^.\\w]+\\w+){30}"
             ]
         }
     ]

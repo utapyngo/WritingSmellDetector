@@ -4,7 +4,7 @@
     "rules": [
         {
             "name": "No space between number and percent symbol",
-            "re": "\\%"
+            "re": "\\d\\%"
         },
         {
             "name": "Currency - Close up (7.6)",
