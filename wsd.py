@@ -25,9 +25,14 @@ ch.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
 logger.addHandler(ch)
 logger.setLevel(logging.INFO)
 
+# sys.stdout.encoding is None when piping to a file.
+encoding = sys.stdout.encoding
+if encoding is None:
+    encoding = sys.getfilesystemencoding()
+
 
 def print_console(*args):
-    print u' '.join(args).encode(sys.stdout.encoding, 'replace')
+    print u' '.join(args).encode(encoding, 'replace')
 
 
 class Rule(object):
