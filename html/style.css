@@ -54,6 +54,7 @@ h3 {
 .line {
     display: table-cell;
     font-family: Consolas, Courier, monospace;
+    white-space: pre;
 }
 
 .lineno {

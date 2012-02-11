@@ -1,6 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <html lang="en">
   <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <title>Writing Smell Detector</title>
     <script src="http://code.jquery.com/jquery-1.6.2.min.js" type="text/javascript"></script>
     <script type="text/javascript">
@@ -173,13 +174,13 @@
                         {% set offset = offset + (l|length - chunks[-1].data|length) %}
                       {% endfor %}
                       <span class="line">
-                      {% for chunk in chunks -%}
+                      {%- for chunk in chunks -%}
                         {%- if chunk.bold -%}
                           <strong>{{ chunk.data|e }}</strong>
                         {%- else -%}
                           {{ chunk.data|e }}
                         {%- endif -%}
-                      {%- endfor %}
+                      {%- endfor -%}
                       </span>
                     </div>
                     {% endfor %}

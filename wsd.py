@@ -4,6 +4,7 @@
 import re
 import math
 import json
+import codecs
 
 import logging
 logger = logging.getLogger(__name__)
@@ -96,7 +97,7 @@ class ProcessedRulesets(object):
         for ruleset in self.rulesets:
             print
             print
-            print '            {0} ({1})'.format(ruleset.ruleset.name, ruleset.nummatches)
+            print u'            {0} ({1})'.format(ruleset.ruleset.name, ruleset.nummatches).encode(sys.stdout.encoding, 'replace')
             if ruleset.ruleset.comments: 
                 for comment in ruleset.ruleset.comments:
                     print comment
@@ -301,7 +302,8 @@ def analyze(args):
     if not os.path.isfile(args.text):
         logger.error('File not found: ' + args.text)
         return 1
-    text = open(args.text).read()
+    
+    text = codecs.open(args.text, encoding='utf-8').read()
     logger.info('Loaded {0} bytes of text from {1}'.format(len(text), args.text))
 
     jsoncomment = re.compile('^\s*//')
@@ -318,7 +320,7 @@ def analyze(args):
             for rule_file in rule_files:
                 try:
                     # remove comments but preserve the same number of lines
-                    jsonrule = ''.join(['\n' if jsoncomment.search(line) else line for line in open(rule_file).readlines()])
+                    jsonrule = ''.join(['\n' if jsoncomment.search(line) else line for line in codecs.open(rule_file, encoding='utf-8').readlines()])
                     ruleset_dict = json.loads(jsonrule)
                 except ValueError, e:
                     logger.error(e)
@@ -343,10 +345,10 @@ def analyze(args):
                 }
             else:
                 json_results = p.to_dict(True)                
-            json.dump(json_results, open(args.outfile, 'wb'),
+            json.dump(json_results, codecs.open(args.outfile, 'wb', encoding='utf-8'),
                       indent=args.indent, cls=IterableEncoder)
         elif args.output_format == 'html':
-            open(args.outfile, 'wb').write(p.to_html(not args.no_embed_css))
+            codecs.open(args.outfile, 'wb', encoding='utf-8').write(p.to_html(not args.no_embed_css))
         logger.info('Results saved to: {0}'.format(args.outfile))
     else:
         p.to_console()
