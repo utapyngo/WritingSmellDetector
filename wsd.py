@@ -1,11 +1,22 @@
 #!python
 # encoding: utf-8
 
+'''Writing Smell Detector is a tool to help find problems in your writing.'''
+
+import os
 import sys
 import re
 import math
 import json
 import codecs
+
+__author__ = 'John Joseph Horton, utapyngo'
+__copyright__ = 'Copyright (C) 2012  John Joseph Horton, utapyngo, oDesk'
+__credits__= ['qbonnard']
+__license__ = 'GPL'
+__maintainer__ = 'utapyngo'
+__email__ = 'utapyngo@gmail.com'
+__status__ = 'Development'
 
 import logging
 logger = logging.getLogger(__name__)
@@ -78,7 +89,6 @@ class ProcessedRulesets(object):
         return d
         
     def to_html(self, embed_css=True):
-        import os
         from jinja2 import Environment, FileSystemLoader
         loader = FileSystemLoader(
             os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html'))
@@ -286,7 +296,6 @@ def analyze(args):
     Store results to args.outfile if specified.
     '''
     from glob import glob
-    import os
 
     if not args.ruleset:
         args.ruleset = [os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rules', '*')]
