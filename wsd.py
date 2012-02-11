@@ -1,6 +1,7 @@
 #!python
 # encoding: utf-8
 
+import sys
 import re
 import math
 import json
@@ -13,6 +14,8 @@ ch.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
 logger.addHandler(ch)
 logger.setLevel(logging.INFO)
 
+def print_console(*args):
+    print u' '.join(args).encode(sys.stdout.encoding, 'replace')
 
 class Rule(object):
     '''Base class of rules'''
@@ -92,33 +95,33 @@ class ProcessedRulesets(object):
         
         def print_line(line, lineno):
             for i, chunk in enumerate(line.strip().split('\n')):
-                print('{1:>{0}}: {2}'.format(line_number_max_digits, lineno + i, chunk))
+                print_console(u'{1:>{0}}: {2}'.format(line_number_max_digits, lineno + i, chunk))
                
         for ruleset in self.rulesets:
             print
             print
-            print u'            {0} ({1})'.format(ruleset.ruleset.name, ruleset.nummatches).encode(sys.stdout.encoding, 'replace')
+            print_console(u'            {0} ({1})'.format(ruleset.ruleset.name, ruleset.nummatches))
             if ruleset.ruleset.comments: 
                 for comment in ruleset.ruleset.comments:
-                    print comment
+                    print_console(comment)
             for rule in ruleset.rules:
                 print
-                print '        Rule: {0} ({1})'.format(rule.rule.name, rule.nummatches)
+                print_console(u'        Rule: {0} ({1})'.format(rule.rule.name, rule.nummatches))
                 if rule.rule.comments:
                     for comment in rule.rule.comments:
-                        print comment
+                        print_console(comment)
                 if rule.rule.prefix:
-                    print '        Prefix:', rule.rule.prefix
+                    print_console(u'        Prefix:', rule.rule.prefix)
                 if rule.rule.suffix:
-                    print '        Suffix:', rule.rule.suffix
+                    print_console(u'        Suffix:', rule.rule.suffix)
                 for pattern in rule.rule.patterns:
                     p = pattern['original']
                     matched_lines = rule.pattern_matches.get(p, {})
                     nummatches = len(matched_lines)
                     print
-                    print '    Pattern: {0} ({1})'.format(p, nummatches)
+                    print_console(u'    Pattern: {0} ({1})'.format(p, nummatches))
                     if hasattr(rule.rule.re, 'iteritems'):
-                        print '    Replace:', rule.rule.re[p]
+                        print_console(u'    Replace:', rule.rule.re[p])
                     for lineno in sorted(matched_lines.keys()):
                         linespan, matches = matched_lines[lineno]
                         data = ''
@@ -250,17 +253,6 @@ class RegularExpressionRuleSet(RuleSet):
         self.replace = data.get('replace', {})
         self.rules = [RegularExpressionRule(d, self.prefix, self.suffix, self.flags, self.replace) for d in data['rules']]
 
-    def process_and_print(self, text):
-        '''Apply all rules to text and print the results'''
-        print
-        print
-        print 'Ruleset:', self.name
-        if self.comments:
-            for comment in self.comments:
-                print comment
-        for rule in self.rules:
-            rule.process_and_print(text)
-
     def process(self, text):
         '''Apply all rules to text and return the results'''
         matched_lines = {}
@@ -355,7 +347,6 @@ def analyze(args):
   
 
 if __name__ == '__main__':
-    import sys
     import argparse
 
     parser = argparse.ArgumentParser()
