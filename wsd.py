@@ -12,7 +12,7 @@ import codecs
 
 __author__ = 'John Joseph Horton, utapyngo'
 __copyright__ = 'Copyright (C) 2012  John Joseph Horton, utapyngo, oDesk'
-__credits__= ['qbonnard']
+__credits__ = ['qbonnard']
 __license__ = 'GPL'
 __maintainer__ = 'utapyngo'
 __email__ = 'utapyngo@gmail.com'
@@ -25,8 +25,10 @@ ch.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
 logger.addHandler(ch)
 logger.setLevel(logging.INFO)
 
+
 def print_console(*args):
     print u' '.join(args).encode(sys.stdout.encoding, 'replace')
+
 
 class Rule(object):
     '''Base class of rules'''
@@ -46,7 +48,7 @@ class RuleSet(object):
 
 
 class ProcessedRule(object):
-    
+
     def __init__(self, rule, lines, pattern_matches):
         self.rule = rule
         # dictionary of { lineno: line }
@@ -57,13 +59,13 @@ class ProcessedRule(object):
 
 
 class ProcessedRuleset(object):
-    
+
     def __init__(self, ruleset, lines, rules):
         self.ruleset = ruleset
         self.lines = lines
         self.rules = rules
         self.nummatches = sum(rule.nummatches for rule in rules)
-        
+
     def to_dict(self):
         result = self.ruleset.data.copy()
         matched_rules = []
@@ -76,18 +78,18 @@ class ProcessedRuleset(object):
 
 
 class ProcessedRulesets(object):
-    
+
     def __init__(self, rulesets, lines, text):
         self.rulesets = rulesets
         self.lines = lines
         self.text = text
-      
+
     def to_dict(self, include_lines):
-        d = { 'rulesets': [r.to_dict() for r in self.rulesets] }
+        d = {'rulesets': [r.to_dict() for r in self.rulesets]}
         if include_lines:
             d['lines'] = self.lines
         return d
-        
+
     def to_html(self, embed_css=True):
         from jinja2 import Environment, FileSystemLoader
         loader = FileSystemLoader(
@@ -98,20 +100,20 @@ class ProcessedRulesets(object):
             lines=self.lines,
             text=self.text,
             css=loader.get_source(env, 'style.css')[0] if embed_css else None)
-        
+
     def to_console(self):
         # max number of digits in line number
         line_number_max_digits = int(math.ceil(math.log10(self.text.count('\n') + 1)))
-        
+
         def print_line(line, lineno):
             for i, chunk in enumerate(line.strip().split('\n')):
                 print_console(u'{1:>{0}}: {2}'.format(line_number_max_digits, lineno + i, chunk))
-               
+
         for ruleset in self.rulesets:
             print
             print
             print_console(u'            {0} ({1})'.format(ruleset.ruleset.name, ruleset.nummatches))
-            if ruleset.ruleset.comments: 
+            if ruleset.ruleset.comments:
                 for comment in ruleset.ruleset.comments:
                     print_console(comment)
             for rule in ruleset.rules:
@@ -136,16 +138,16 @@ class ProcessedRulesets(object):
                         linespan, matches = matched_lines[lineno]
                         data = ''
                         for i in range(linespan):
-                            data += self.lines[lineno+i] + '\n'
+                            data += self.lines[lineno + i] + '\n'
                         offset = 0
-                        chunks = [{ 'data': data }]
+                        chunks = [{'data': data}]
                         for m in matches:
                             s = m[0] - offset
                             e = m[1] - offset
                             l = chunks.pop()['data']
-                            chunks.append({ 'bold': False, 'data': l[:s] })
-                            chunks.append({ 'bold': True, 'data': l[s:e] })
-                            chunks.append({ 'bold': False, 'data': l[e:] })
+                            chunks.append({'bold': False, 'data': l[:s]})
+                            chunks.append({'bold': True, 'data': l[s:e]})
+                            chunks.append({'bold': False, 'data': l[e:]})
                             offset = offset + (len(l) - len(chunks[-1]['data']))
                         for chunk in chunks:
                             if chunk['bold']:
@@ -165,7 +167,7 @@ def process_flags(flags, default=0):
             continue
         elif flag in 'SLUMIX':
             if mode == '-':
-                result = result &~ getattr(re, flag)
+                result &= ~getattr(re, flag)
             else:
                 result |= getattr(re, flag)
         else:
@@ -194,7 +196,7 @@ class RegularExpressionRule(Rule):
         self.replace = data.get('replace', replace)
         self.re = data.get('re', [])
         if isinstance(self.re, basestring):
-            patterns = [ self.re ]
+            patterns = [self.re]
         elif hasattr(self.re, '__getitem__'):
             patterns = self.re
         for p in patterns:
@@ -206,8 +208,8 @@ class RegularExpressionRule(Rule):
             for s, r in self.replace.iteritems():
                 p = re.sub(s, r, p)
             compiled = re.compile(self.prefix + p + self.suffix, self.flags)
-            self.patterns.append({ 'compiled': compiled,
-                                   'original': original_pattern })
+            self.patterns.append({'compiled': compiled,
+                                  'original': original_pattern})
 
     def itermatches(self, text):
         '''
@@ -240,7 +242,7 @@ class RegularExpressionRule(Rule):
                 # location of the match relative to current line
                 lstart, lend = start - linestart, end - linestart
                 linespan = line.strip().count('\n') + 1
-                if rmatches.has_key(lineno):
+                if lineno in rmatches:
                     rmatches[lineno][0] = linespan
                     rmatches[lineno][1].append((lstart, lend))
                 else:
@@ -303,7 +305,7 @@ def analyze(args):
     if not os.path.isfile(args.text):
         logger.error('File not found: ' + args.text)
         return 1
-    
+
     text = codecs.open(args.text, encoding='utf-8').read()
     logger.info('Loaded {0} bytes of text from {1}'.format(len(text), args.text))
 
@@ -333,7 +335,7 @@ def analyze(args):
                 rulesets.append(processed_ruleset)
         if empty_mask:
             logger.warn('No files matching "{0}" found'.format(mask))
-            
+
     p = ProcessedRulesets(rulesets, matched_lines, text)
     if args.outfile:
         if args.output_format == 'json':
@@ -345,7 +347,7 @@ def analyze(args):
                     'md5': hashlib.md5(args.text).hexdigest()
                 }
             else:
-                json_results = p.to_dict(True)                
+                json_results = p.to_dict(True)
             json.dump(json_results, codecs.open(args.outfile, 'wb', encoding='utf-8'),
                       indent=args.indent, cls=IterableEncoder)
         elif args.output_format == 'html':
@@ -353,7 +355,7 @@ def analyze(args):
         logger.info('Results saved to: {0}'.format(args.outfile))
     else:
         p.to_console()
-  
+
 
 if __name__ == '__main__':
     import argparse
