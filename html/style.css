@@ -68,26 +68,6 @@ h3 {
     display: table-row;
 }
 
-.replace {
-    display: table-row;
-}
-
-.replace > .key {
-    display: table-cell;
-    text-align: right;
-}
-
-.replace > .value {
-    display: table-cell;
-    text-align: left;
-}
-
-.replace > .arrow {
-    display: table-cell;
-    font-family: Consolas, Courier, monospace;
-    text-align: center; 
-}
-
 .spoiler-head {
     cursor: pointer;
 }

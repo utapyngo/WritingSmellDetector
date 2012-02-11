@@ -145,7 +145,7 @@
                   {% set p = pattern.original %}
                   <div class="pattern-props">
                     {% if rule.rule.re.iteritems is defined %}
-                      Replace: <div class="replace">{{ rule.rule.re[p]|e }}</div>
+                      Replacement: <span class="replace">{{ rule.rule.re[p]|e }}</span>
                     {% endif %}
                   </div>
                   {% if rule.pattern_matches.has_key(p) %}
