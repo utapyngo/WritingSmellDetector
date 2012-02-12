@@ -95,7 +95,7 @@ class ProcessedRulesets(object):
             d['lines'] = self.lines
         return d
 
-    def to_html(self, embed_css=True):
+    def to_html(self, embed_css=True, include_empty=False):
         from jinja2 import Environment, FileSystemLoader
         loader = FileSystemLoader(
             os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html'))
@@ -104,9 +104,10 @@ class ProcessedRulesets(object):
         return template.render(rulesets=self.rulesets,
             lines=self.lines,
             text=self.text,
-            css=loader.get_source(env, 'style.css')[0] if embed_css else None)
+            css=loader.get_source(env, 'style.css')[0] if embed_css else None,
+            include_empty=include_empty)
 
-    def to_console(self):
+    def to_console(self, include_empty=False):
         # max number of digits in line number
         line_number_max_digits = int(math.ceil(math.log10(self.text.count('\n') + 1)))
 
@@ -115,6 +116,8 @@ class ProcessedRulesets(object):
                 print_console(u'{1:>{0}}: {2}'.format(line_number_max_digits, lineno + i, chunk))
 
         for ruleset in self.rulesets:
+            if not include_empty and ruleset.nummatches == 0:
+                continue
             print
             print
             print_console(u'            {0} ({1})'.format(ruleset.ruleset.name, ruleset.nummatches))
@@ -122,6 +125,8 @@ class ProcessedRulesets(object):
                 for comment in ruleset.ruleset.comments:
                     print_console(comment)
             for rule in ruleset.rules:
+                if not include_empty and rule.nummatches == 0:
+                    continue
                 print
                 print_console(u'        Rule: {0} ({1})'.format(rule.rule.name, rule.nummatches))
                 if rule.rule.comments:
@@ -135,6 +140,8 @@ class ProcessedRulesets(object):
                     p = pattern['original']
                     matched_lines = rule.pattern_matches.get(p, {})
                     nummatches = len(matched_lines)
+                    if not include_empty and nummatches == 0:
+                        continue
                     print
                     print_console(u'    Pattern: {0} ({1})'.format(p, nummatches))
                     if hasattr(rule.rule.re, 'iteritems'):
@@ -268,7 +275,8 @@ class RegularExpressionRuleSet(RuleSet):
         self.suffix = data.get('suffix', '')
         self.flags = process_flags(data.get('flags', ''), default_flags)
         self.replace = data.get('replace', {})
-        self.rules = [RegularExpressionRule(d, self.prefix, self.suffix, self.flags, self.replace) for d in data['rules']]
+        self.rules = [RegularExpressionRule(d, self.prefix, self.suffix, self.flags, self.replace)
+                      for d in data['rules']]
 
     def process(self, text):
         '''Apply all rules to text and return the results'''
@@ -328,7 +336,8 @@ def analyze(args):
             for rule_file in rule_files:
                 try:
                     # remove comments but preserve the same number of lines
-                    jsonrule = ''.join(['\n' if jsoncomment.search(line) else line for line in codecs.open(rule_file, encoding='utf-8').readlines()])
+                    lines = codecs.open(rule_file, encoding='utf-8').readlines()
+                    jsonrule = ''.join(['\n' if jsoncomment.search(line) else line for line in lines])
                     ruleset_dict = json.loads(jsonrule)
                 except ValueError, e:
                     logger.error(e)
@@ -356,10 +365,12 @@ def analyze(args):
             json.dump(json_results, codecs.open(args.outfile, 'wb', encoding='utf-8'),
                       indent=args.indent, cls=IterableEncoder)
         elif args.output_format == 'html':
-            codecs.open(args.outfile, 'wb', encoding='utf-8').write(p.to_html(not args.no_embed_css))
+            html = p.to_html(not args.no_embed_css, args.include_empty)
+            f = codecs.open(args.outfile, 'wb', encoding='utf-8')
+            f.write(html)
         logger.info('Results saved to: {0}'.format(args.outfile))
     else:
-        p.to_console()
+        p.to_console(args.include_empty)
 
 
 if __name__ == '__main__':
@@ -377,6 +388,8 @@ if __name__ == '__main__':
         help='output file name')
     export.add_argument('-f', '--output-format', default='html', choices=('json', 'html'),
         help='output file format')
+    export.add_argument('-e', '--include-empty', action='store_true',
+        help='Include empty rules to output')
     html_group.add_argument('-nec', '--no-embed-css', action='store_true',
         help="don't embed style.css into generated html file")
     json_group.add_argument('-r', '--reftext', action='store_true',

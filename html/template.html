@@ -73,6 +73,7 @@
     </div>
     <div id="rulesets">
       {% for ruleset in rulesets %}
+      {% if ruleset.nummatches or include_empty %}
       <div class="spoiler-wrap level1" id="rulesets-{{ loop.index }}">
         {% if ruleset.nummatches %}
           <div class="spoiler-head unfolded">
@@ -84,119 +85,126 @@
           </div>
         {% endif %}
         <div class="spoiler-body">
-          <div class="ruleset-props">
-            {% if ruleset.ruleset.comments %}
-              {% for comment in ruleset.ruleset.comments %}
-              <div class="comment">
-                {{ comment|e }}
-              </div>
-              {% endfor %}
-            {% endif %}
-          </div>
-          <div class="tools">
-            <a onclick="$('.spoiler-wrap > .spoiler-head.unfolded', $(this).parent().parent()).toggleSpoiler();">Collapse all</a>
-            <span class="lsep">|</span>
-            <a onclick="$('.spoiler-wrap > .spoiler-head.folded', $(this).parent().parent()).toggleSpoiler();">Expand all</a>
-          </div>
-          {% for rule in ruleset.rules %}
-          <div class="spoiler-wrap">
-            {% if rule.nummatches %}
-            <div class="spoiler-head unfolded">
-              <h2>Rule: {{ rule.rule.name|e }} <span class="nummatches">{{ rule.nummatches }}</span></h2>
-            </div>
-            {% else %}
-            <div class="spoiler-head folded">
-              <h2>Rule: {{ rule.rule.name|e }} <span class="nummatches">{{ rule.nummatches }}</span></h2>
-            </div>
-            {% endif %}
-            <div class="spoiler-body">
-              <div class="rule-props">
-                {% if rule.rule.comments %}
-                  {% for comment in rule.rule.comments %}
-                  <div class="comment">
-                    {{ comment|e }}
-                  </div>
-                  {% endfor %}
-                {% endif %}
-                {% if rule.rule.prefix %}
-                  <div>
-                    Prefix: <span class="prefix">{{ rule.rule.prefix|e }}</span>
-                  </div>
-                {% endif %}
-                {% if rule.rule.suffix %}
-                  <div>
-                    Suffix: <span class="suffix">{{ rule.rule.suffix|e }}</span>
-                  </div>
-                {% endif %}
-              </div>
-              {% for pattern in rule.rule.patterns %}
-              <div class="spoiler-wrap">
-                {% set nummatches = rule.pattern_matches[pattern.original]|default({})|length %}
-                {% if nummatches %}
-                <div class="spoiler-head unfolded">
-                  <h3>Pattern: <span class="pattern">{{ pattern.original|e }}</span><span class="nummatches">{{ nummatches }}</span></h3>
+          <div class="spoiler-contents">
+            <div class="ruleset-props">
+              {% if ruleset.ruleset.comments %}
+                {% for comment in ruleset.ruleset.comments %}
+                <div class="comment">
+                  {{ comment|e }}
                 </div>
-                {% else %}
-                <div class="spoiler-head folded">
-                  <h3>Pattern: <span class="pattern">{{ pattern.original|e }}</span><span class="nummatches">{{ nummatches }}</span></h3>
-                </div>
-                {% endif %}
-                <div class="spoiler-body">
-                  {% set p = pattern.original %}
-                  <div class="pattern-props">
-                    {% if rule.rule.re.iteritems is defined %}
-                      Replacement: <span class="replace">{{ rule.rule.re[p]|e }}</span>
-                    {% endif %}
-                  </div>
-                  {% if rule.pattern_matches.has_key(p) %}
-                    {% for lineno in rule.pattern_matches[p].keys() | sort %}
-                    <div class="match">
-                      <span class="lineno">
-                        <a href="#line-{{ lineno }}"
-                          onclick="jQuery('#text .spoiler-wrap .spoiler-head.folded').toggleSpoiler()">
-                          {{ lineno }}
-                        </a>
-                      </span>
-                      {% set linespan, matches = rule.pattern_matches[p][lineno] %}
-                      {% set chunks = [{ 'data': '' }] %}
-                      {% for i in range(linespan) %}
-                        {% set x = chunks.pop().data %}
-                        {% if chunks.append({ 'data': x + lines[lineno+i] + '\n' }) %}{% endif %}
-                      {% endfor %}
-                      {% set offset = 0 %}
-                      {% for m in matches %}
-                        {% set s = m[0] - offset %}
-                        {% set e = m[1] - offset %}
-                        {% set l = chunks.pop().data %}
-                        {% if chunks.append({ 'bold': False, 'data': l[:s] }) %}{% endif %}
-                        {% if chunks.append({ 'bold': True, 'data': l[s:e] }) %}{% endif %}
-                        {% if chunks.append({ 'bold': False, 'data': l[e:] }) %}{% endif %}
-                        {% set offset = offset + (l|length - chunks[-1].data|length) %}
-                      {% endfor %}
-                      <span class="line">
-                      {%- for chunk in chunks -%}
-                        {%- if chunk.bold -%}
-                          <strong>{{ chunk.data|e }}</strong>
-                        {%- else -%}
-                          {{ chunk.data|e }}
-                        {%- endif -%}
-                      {%- endfor -%}
-                      </span>
+                {% endfor %}
+              {% endif %}
+            </div>
+            <div class="tools">
+              <a onclick="$('.spoiler-wrap > .spoiler-head.unfolded', $(this).parent().parent()).toggleSpoiler();">Collapse all</a>
+              <span class="lsep">|</span>
+              <a onclick="$('.spoiler-wrap > .spoiler-head.folded', $(this).parent().parent()).toggleSpoiler();">Expand all</a>
+            </div>
+            {% for rule in ruleset.rules %}
+            {% if rule.nummatches or include_empty %}
+            <div class="spoiler-wrap">
+              {% if rule.nummatches %}
+              <div class="spoiler-head unfolded">
+                <h2>Rule: {{ rule.rule.name|e }} <span class="nummatches">{{ rule.nummatches }}</span></h2>
+              </div>
+              {% else %}
+              <div class="spoiler-head folded">
+                <h2>Rule: {{ rule.rule.name|e }} <span class="nummatches">{{ rule.nummatches }}</span></h2>
+              </div>
+              {% endif %}
+              <div class="spoiler-body">
+                <div class="rule-props">
+                  {% if rule.rule.comments %}
+                    {% for comment in rule.rule.comments %}
+                    <div class="comment">
+                      {{ comment|e }}
                     </div>
                     {% endfor %}
-                  {% else %}
-                    <div class="no-matches">
-                      No matches
+                  {% endif %}
+                  {% if rule.rule.prefix %}
+                    <div>
+                      Prefix: <span class="prefix">{{ rule.rule.prefix|e }}</span>
+                    </div>
+                  {% endif %}
+                  {% if rule.rule.suffix %}
+                    <div>
+                      Suffix: <span class="suffix">{{ rule.rule.suffix|e }}</span>
                     </div>
                   {% endif %}
                 </div>
+                {% for pattern in rule.rule.patterns %}
+                {% set nummatches = rule.pattern_matches[pattern.original]|default({})|length %}
+                {% if nummatches or include_empty %}
+                <div class="spoiler-wrap">
+                  {% if nummatches %}
+                  <div class="spoiler-head unfolded">
+                    <h3>Pattern: <span class="pattern">{{ pattern.original|e }}</span><span class="nummatches">{{ nummatches }}</span></h3>
+                  </div>
+                  {% else %}
+                  <div class="spoiler-head folded">
+                    <h3>Pattern: <span class="pattern">{{ pattern.original|e }}</span><span class="nummatches">{{ nummatches }}</span></h3>
+                  </div>
+                  {% endif %}
+                  <div class="spoiler-body">
+                    {% set p = pattern.original %}
+                    <div class="pattern-props">
+                      {% if rule.rule.re.iteritems is defined %}
+                        Replacement: <span class="replace">{{ rule.rule.re[p]|e }}</span>
+                      {% endif %}
+                    </div>
+                    {% if rule.pattern_matches.has_key(p) %}
+                      {% for lineno in rule.pattern_matches[p].keys() | sort %}
+                      <div class="match">
+                        <span class="lineno">
+                          <a href="#line-{{ lineno }}"
+                            onclick="jQuery('#text .spoiler-wrap .spoiler-head.folded').toggleSpoiler()">
+                            {{ lineno }}
+                          </a>
+                        </span>
+                        {% set linespan, matches = rule.pattern_matches[p][lineno] %}
+                        {% set chunks = [{ 'data': '' }] %}
+                        {% for i in range(linespan) %}
+                          {% set x = chunks.pop().data %}
+                          {% if chunks.append({ 'data': x + lines[lineno+i] + '\n' }) %}{% endif %}
+                        {% endfor %}
+                        {% set offset = 0 %}
+                        {% for m in matches %}
+                          {% set s = m[0] - offset %}
+                          {% set e = m[1] - offset %}
+                          {% set l = chunks.pop().data %}
+                          {% if chunks.append({ 'bold': False, 'data': l[:s] }) %}{% endif %}
+                          {% if chunks.append({ 'bold': True, 'data': l[s:e] }) %}{% endif %}
+                          {% if chunks.append({ 'bold': False, 'data': l[e:] }) %}{% endif %}
+                          {% set offset = offset + (l|length - chunks[-1].data|length) %}
+                        {% endfor %}
+                        <span class="line">
+                        {%- for chunk in chunks -%}
+                          {%- if chunk.bold -%}
+                            <strong>{{ chunk.data|e }}</strong>
+                          {%- else -%}
+                            {{ chunk.data|e }}
+                          {%- endif -%}
+                        {%- endfor -%}
+                        </span>
+                      </div>
+                      {% endfor %}
+                    {% else %}
+                      <div class="no-matches">
+                        No matches
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endif %}
+                {% endfor %}
               </div>
-              {% endfor %}
             </div>
+            {% endif %}
+            {% endfor %}
           </div>
-          {% endfor %}
         </div>
       </div>
+      {% endif %}
       {% endfor %}
     </div>
     <div id="text">
@@ -205,12 +213,14 @@
           <h1>Text</h1>
         </div>
         <div class="spoiler-body">
-          {% for line in text.split('\n') %}
-          <div class="line-container">
-            <span class="lineno">{{ loop.index }}</span>
-            <span class="line"><a id="line-{{ loop.index }}">{{ line|e }}</a></span>
+          <div class="spoiler-contents">
+            {% for line in text.split('\n') %}
+            <div class="line-container">
+              <span class="lineno">{{ loop.index }}</span>
+              <span class="line"><a id="line-{{ loop.index }}">{{ line|e }}</a></span>
+            </div>
+            {% endfor %}
           </div>
-          {% endfor %}
         </div>
       </div>
     </div>
