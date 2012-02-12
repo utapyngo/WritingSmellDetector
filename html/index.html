@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <title>Writing Smell Detector</title>
+    <style>
+      html, body {
+        font-family: Calibri, Tahoma, Arial;
+        height: 95%;
+      }
+      input, textarea {
+        font-size: 14px;
+        border: 1px solid #bbbbbb;
+        padding: 5px;
+        border-radius: 3px;
+        width: 98%;
+        height: 98%;
+        box-sizing: border-box;
+        -webkit-box-sizing:border-box;
+        -moz-box-sizing: border-box;
+        -ms-box-sizing: border-box;
+      }
+    </style>
+  </head>
+  <body>
+    <form method="POST" action="process" style="height: 80%">
+      <p>
+        Paste your writing here:
+      </p>
+      <textarea name="text"></textarea>
+      <div>
+        <input type="submit"/>
+      </div>
+      <p>
+        Note: we don't store your writings.
+      </p>
+    </form>
+  </body>
+</html>

@@ -12,7 +12,7 @@ import codecs
 
 __author__ = 'John Joseph Horton, utapyngo'
 __copyright__ = 'Copyright (C) 2012  John Joseph Horton, utapyngo, oDesk'
-__credits__ = ['qbonnard']
+__credits__ = ['qbonnard', 'eventh']
 __license__ = 'GPL'
 __maintainer__ = 'utapyngo'
 __email__ = 'utapyngo@gmail.com'
@@ -26,7 +26,8 @@ logger.addHandler(ch)
 logger.setLevel(logging.INFO)
 
 # sys.stdout.encoding is None when piping to a file.
-encoding = sys.stdout.encoding
+# sys.stdout does not have the `encoding` attribute with GAE dev_appserver 
+encoding = sys.stdout.encoding if hasattr(sys.stdout, 'encoding') else None
 if encoding is None:
     encoding = sys.getfilesystemencoding()
 
@@ -303,29 +304,18 @@ class IterableEncoder(json.JSONEncoder):
         return super(IterableEncoder, self).default(o)
 
 
-def analyze(args):
+def load_rulesets(masks=None):
     '''
-    Load text from args.text.
-    Load and run rulesets from args.ruleset list.
-    Shell wildcards are allowed in ruleset arguments.
-    Store results to args.outfile if specified.
+    Load rulesets from masks list.
+    Shell wildcards are allowed.
+    Load from `rules` directory by default.
     '''
     from glob import glob
-
-    if not args.ruleset:
-        args.ruleset = [os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rules', '*')]
-
-    if not os.path.isfile(args.text):
-        logger.error('File not found: ' + args.text)
-        return 1
-
-    text = codecs.open(args.text, encoding='utf-8').read()
-    logger.info('Loaded {0} bytes of text from {1}'.format(len(text), args.text))
-
     jsoncomment = re.compile('^\s*//')
     rulesets = []
-    matched_lines = {}
-    for mask in args.ruleset:
+    if not masks:
+        masks = [os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rules', '*')]
+    for mask in masks:
         empty_mask = True
         for rule_file_or_dir in glob(mask):
             empty_mask = False
@@ -344,13 +334,36 @@ def analyze(args):
                     logger.error("In file: " + rule_file)
                     continue
                 ruleset = RegularExpressionRuleSet(ruleset_dict)
-                processed_ruleset = ruleset.process(text)
-                matched_lines.update(processed_ruleset.lines)
-                rulesets.append(processed_ruleset)
+                rulesets.append(ruleset)
         if empty_mask:
             logger.warn('No files matching "{0}" found'.format(mask))
+    return rulesets
 
-    p = ProcessedRulesets(rulesets, matched_lines, text)
+
+def main(args):
+    '''
+    Load text from args.text.
+    Load and run rulesets from args.ruleset list.
+    Store results to args.outfile if specified.
+    '''
+
+    if not os.path.isfile(args.text):
+        logger.error('File not found: ' + args.text)
+        return 1
+
+    text = codecs.open(args.text, encoding='utf-8').read()
+    logger.info('Loaded {0} bytes of text from {1}'.format(len(text), args.text))
+
+    rulesets = load_rulesets(args.ruleset)
+    
+    processed_rulesets = []
+    matched_lines = {}
+    for ruleset in rulesets:
+        processed_ruleset = ruleset.process(text)
+        matched_lines.update(processed_ruleset.lines)
+        processed_rulesets.append(processed_ruleset)
+    p = ProcessedRulesets(processed_rulesets, matched_lines, text)
+    
     if args.outfile:
         if args.output_format == 'json':
             if args.reftext:
@@ -405,4 +418,4 @@ if __name__ == '__main__':
         sys.exit(1)
     if args.indent == 0:
         args.indent = None
-    sys.exit(analyze(args))
+    sys.exit(main(args))
