@@ -6,6 +6,7 @@ from wsd import process_flags, RegularExpressionRule, RegularExpressionRuleSet
 from wsd import default_flags
 import re
 
+
 class TestProcessFlags(unittest.TestCase):
 
     def test_process_flags_all(self):
@@ -26,7 +27,7 @@ class TestRegularExpressionRule(unittest.TestCase):
         self.expr = '\w+'
         self.prefix = r'\b'
         self.suffix = r'\b'
-        self.rule_data = { 're': self.expr, 'flags': 'I' }
+        self.rule_data = {'re': self.expr, 'flags': 'I'}
         self.rule = RegularExpressionRule(self.rule_data, self.prefix, self.suffix, default_flags, {})
         self.text = u'Some text\n    with spaces\nи другими символами'
 
@@ -60,6 +61,7 @@ class TestRegularExpressionRule(unittest.TestCase):
             }
         )
 
+
 class TestRegularExpressionRuleSet(unittest.TestCase):
 
     def setUp(self):
@@ -83,7 +85,7 @@ class TestRegularExpressionRuleSet(unittest.TestCase):
 
     def test_process(self):
         result = self.ruleset.process(self.text)
-        self.assertEqual(result.lines, { 1: self.text })
+        self.assertEqual(result.lines, {1: self.text})
         self.assertEqual(len(result.rules), 1)
         processed_rule = result.rules[0]
         self.assertEqual(processed_rule.rule.data, self.rule_data)
