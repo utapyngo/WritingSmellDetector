@@ -3,7 +3,7 @@
 
 import unittest
 from wsd import process_flags, RegularExpressionRule, RegularExpressionRuleSet
-from wsd import default_flags
+from wsd import DEFAULT_FLAGS
 import re
 
 
@@ -18,7 +18,7 @@ class TestProcessFlags(unittest.TestCase):
     def test_process_flags_minus(self):
         flags = '-U+X'
         expected = re.S | re.X
-        self.assertEqual(expected, process_flags(flags, default_flags))
+        self.assertEqual(expected, process_flags(flags, DEFAULT_FLAGS))
 
 
 class TestRegularExpressionRule(unittest.TestCase):
@@ -28,16 +28,18 @@ class TestRegularExpressionRule(unittest.TestCase):
         self.prefix = r'\b'
         self.suffix = r'\b'
         self.rule_data = {'re': self.expr, 'flags': 'I'}
-        self.rule = RegularExpressionRule(self.rule_data, self.prefix, self.suffix, default_flags, {})
+        self.rule = RegularExpressionRule(
+            self.rule_data, self.prefix, self.suffix, DEFAULT_FLAGS, {})
         self.text = u'Some text\n    with spaces\nи другими символами'
 
     def test_itermatches(self):
         x = list(self.rule.itermatches(self.text))
         self.assertEqual(len(x), 1)
         pattern, matches = x[0]
-        flags = process_flags(self.rule_data['flags'], default_flags)
+        flags = process_flags(self.rule_data['flags'], DEFAULT_FLAGS)
         self.assertEqual(pattern['original'], self.expr)
-        self.assertEqual(pattern['compiled'], re.compile(self.prefix + self.expr + self.suffix, flags))
+        self.assertEqual(pattern['compiled'],
+                         re.compile(self.prefix + self.expr + self.suffix, flags))
         matches_list = list(matches)
         self.assertEqual(len(matches_list), 7)
         self.assertEqual(matches_list[0].span(), (0, 4))
@@ -50,7 +52,8 @@ class TestRegularExpressionRule(unittest.TestCase):
 
     def test_process(self):
         result = self.rule.process(self.text)
-        self.assertEqual(result.lines, dict(enumerate(self.text.splitlines(), 1)))
+        self.assertEqual(result.lines,
+                         dict(enumerate(self.text.splitlines(), 1)))
         self.assertEqual(result.pattern_matches,
             {
                 self.expr: {

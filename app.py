@@ -24,14 +24,8 @@ class Process(webapp2.RequestHandler):
     def post(self):
         text = self.request.get('text')
         rulesets = wsd.load_rulesets()
-        processed_rulesets = []
-        matched_lines = {}
-        for ruleset in rulesets:
-            processed_ruleset = ruleset.process(text)
-            matched_lines.update(processed_ruleset.lines)
-            processed_rulesets.append(processed_ruleset)
-        p = wsd.ProcessedRulesets(processed_rulesets, matched_lines, text)
-        self.response.out.write(p.to_html(embed_css=True, include_empty=False))
+        prulesets = wsd.ProcessedRulesets(rulesets, text)
+        self.response.out.write(prulesets.to_html(True))
 
 
 handler = webapp2.WSGIApplication(
