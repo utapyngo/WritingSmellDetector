@@ -172,15 +172,15 @@
                           {% set s = m[0] - offset %}
                           {% set e = m[1] - offset %}
                           {% set l = chunks.pop().data %}
-                          {% if chunks.append({ 'bold': False, 'data': l[:s] }) %}{% endif %}
-                          {% if chunks.append({ 'bold': True, 'data': l[s:e] }) %}{% endif %}
-                          {% if chunks.append({ 'bold': False, 'data': l[e:] }) %}{% endif %}
+                          {% if chunks.append({ 'highlight': False, 'data': l[:s] }) %}{% endif %}
+                          {% if chunks.append({ 'highlight': True, 'data': l[s:e] }) %}{% endif %}
+                          {% if chunks.append({ 'highlight': False, 'data': l[e:] }) %}{% endif %}
                           {% set offset = offset + (l|length - chunks[-1].data|length) %}
                         {% endfor %}
                         <span class="line">
                         {%- for chunk in chunks -%}
-                          {%- if chunk.bold -%}
-                            <strong>{{ chunk.data|e }}</strong>
+                          {%- if chunk.highlight -%}
+                            <span class="highlight">{{ chunk.data|e }}</span>
                           {%- else -%}
                             {{ chunk.data|e }}
                           {%- endif -%}

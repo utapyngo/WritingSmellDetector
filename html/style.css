@@ -124,3 +124,7 @@ h3 {
     color: white;
     background-color: silver;
 }
+
+.highlight {
+    background-color: yellow;
+}
