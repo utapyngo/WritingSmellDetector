@@ -1,2 +1,5 @@
-﻿# Ignore compiled python files
+﻿# compiled python files
 *.pyc
+*.pyo
+# generated html files in root folder
+/*.html

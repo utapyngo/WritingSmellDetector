@@ -27,3 +27,4 @@ skip_files:
 - ^rule_template.json$
 - ^wsd_test.py$
 - ^examples
+- ^[^/]+\.html$
