@@ -4,11 +4,14 @@
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <title>Writing Smell Detector</title>
     <style>
-      html, body {
+      html {
         font-family: Calibri, Tahoma, Arial;
-        height: 95%;
+        height: 90%;
       }
-      input, textarea {
+      body, form, #writing {
+        height: 90%;
+      }
+      textarea {
         font-size: 14px;
         border: 1px solid #bbbbbb;
         padding: 5px;
@@ -20,20 +23,48 @@
         -moz-box-sizing: border-box;
         -ms-box-sizing: border-box;
       }
+      #writing {
+        float: left;
+        width: 70%;
+      }
+      #rulesets {
+        float: right;
+        width: 30%;
+      }
     </style>
   </head>
   <body>
-    <form method="POST" action="process" style="height: 80%">
-      <p>
-        Paste your writing here:
-      </p>
-      <textarea name="text"></textarea>
-      <div>
-        <input type="submit"/>
+    <form method="POST" action="process">
+      <div id="rulesets">
+        <p>
+          Select rules:
+        </p>
+        {% for ruleset in rulesets %}
+          <div class="ruleset">
+            <input type="checkbox"
+              id="{{ ruleset.id }}"
+              name="ruleset"
+              value="{{ ruleset.id }}"
+            {% if not ruleset.id in disabled %}
+              checked
+            {% endif %}
+            />
+            <label for="{{ ruleset.id }}">{{ ruleset.name }}</label>
+          </div>
+        {% endfor %}
       </div>
-      <p>
-        Note: we don't store your writings.
-      </p>
+      <div id="writing">
+        <p>
+          Paste your writing here:
+        </p>
+        <textarea name="text"></textarea>
+        <div>
+          <input type="submit"/>
+        </div>
+        <p>
+          Note: we don't store your writings.
+        </p>
+      </div>
     </form>
   </body>
 </html>

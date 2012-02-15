@@ -1,5 +1,6 @@
 ﻿# compiled python files
 *.pyc
 *.pyo
-# generated html files in root folder
+
+# generated html files in the root folder
 /*.html

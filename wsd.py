@@ -378,8 +378,9 @@ class RegularExpressionRuleSet(RuleSet):
     '''
     Set of regular expression rules
     '''
-    def __init__(self, data):
+    def __init__(self, data, id):
         RuleSet.__init__(self)
+        self.id = unicode(id).replace(u'\\', u'/')
         self.data = data
         self.name = data['ruleset']
         self.comments = data.get('comments')
@@ -428,14 +429,12 @@ def load_rulesets(masks=None):
     '''
     from glob import glob
     jsoncomment = re.compile('^\s*//')
+    rules_folder = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'rules')
     rulesets = []
     if not masks:
         masks = [
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                'rules',
-                '*'
-            )
+            os.path.join(rules_folder, '*')
         ]
     for mask in masks:
         empty_mask = True
@@ -459,7 +458,8 @@ def load_rulesets(masks=None):
                     LOG.error(exc)
                     LOG.error("In file: " + rule_file)
                     continue
-                ruleset = RegularExpressionRuleSet(ruleset_dict)
+                ruleset = RegularExpressionRuleSet(ruleset_dict,
+                    os.path.relpath(rule_file, rules_folder))
                 rulesets.append(ruleset)
         if empty_mask:
             LOG.warn('No files matching "{0}" found'.format(mask))
