@@ -3,6 +3,7 @@
 import os
 import jinja2
 import webapp2
+from google.appengine.api import memcache
 import wsd
 
 jinja_environment = jinja2.Environment(
@@ -12,9 +13,20 @@ jinja_environment = jinja2.Environment(
 )
 
 
+def get_rulesets():
+    rulesets = memcache.get('rulesets')
+    if rulesets is not None:
+        return rulesets
+    else:
+        rulesets = wsd.load_rulesets()
+        if not memcache.add('rulesets', rulesets, 10):
+            wsd.LOG.error('Memcache set failed.')
+        return rulesets
+
+
 class MainPage(webapp2.RequestHandler):
     def get(self):
-        rulesets = wsd.load_rulesets()
+        rulesets = get_rulesets()
         disabled_rulesets = self.request.cookies.get('d')
         if disabled_rulesets:
             disabled_rulesets = disabled_rulesets.split('|')
@@ -34,7 +46,7 @@ class Process(webapp2.RequestHandler):
         checked_rulesets = self.request.POST.getall('ruleset')
         rulesets = []
         disabled = []
-        for ruleset in wsd.load_rulesets():
+        for ruleset in get_rulesets():
             if ruleset.id in checked_rulesets:
                 rulesets.append(ruleset)
             else:
