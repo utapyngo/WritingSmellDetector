@@ -2,8 +2,8 @@
 # encoding: utf-8
 
 import unittest
-from wsd import process_flags, RegularExpressionRule, RegularExpressionRuleSet
-from wsd import DEFAULT_FLAGS
+from regex_rules import process_flags, RegularExpressionRule, RegularExpressionRuleset
+from regex_rules import DEFAULT_FLAGS
 import re
 
 
@@ -28,8 +28,10 @@ class TestRegularExpressionRule(unittest.TestCase):
         self.prefix = r'\b'
         self.suffix = r'\b'
         self.rule_data = {'re': self.expr, 'flags': 'I'}
-        self.rule = RegularExpressionRule(
-            self.rule_data, self.prefix, self.suffix, DEFAULT_FLAGS, {})
+        self.rule = RegularExpressionRule(None,
+            { 'prefix': self.prefix,
+              'suffix': self.suffix },
+            self.rule_data, DEFAULT_FLAGS, {})
         self.text = u'Some text\n    with spaces\nи другими символами'
 
     def test_itermatches(self):
@@ -42,13 +44,13 @@ class TestRegularExpressionRule(unittest.TestCase):
                          re.compile(self.prefix + self.expr + self.suffix, flags))
         matches_list = list(matches)
         self.assertEqual(len(matches_list), 7)
-        self.assertEqual(matches_list[0].span(), (0, 4))
-        self.assertEqual(matches_list[1].span(), (5, 9))
-        self.assertEqual(matches_list[2].span(), (14, 18))
-        self.assertEqual(matches_list[3].span(), (19, 25))
-        self.assertEqual(matches_list[4].span(), (26, 27))
-        self.assertEqual(matches_list[5].span(), (28, 35))
-        self.assertEqual(matches_list[6].span(), (36, 45))
+        self.assertEqual(matches_list[0], (0, 4))
+        self.assertEqual(matches_list[1], (5, 9))
+        self.assertEqual(matches_list[2], (14, 18))
+        self.assertEqual(matches_list[3], (19, 25))
+        self.assertEqual(matches_list[4], (26, 27))
+        self.assertEqual(matches_list[5], (28, 35))
+        self.assertEqual(matches_list[6], (36, 45))
 
     def test_process(self):
         result = self.rule.process(self.text)
@@ -84,7 +86,7 @@ class TestRegularExpressionRuleSet(unittest.TestCase):
                 self.rule_data
             ]
         }
-        self.ruleset = RegularExpressionRuleSet(self.data)
+        self.ruleset = RegularExpressionRuleset(self.data, 'testdata')
 
     def test_process(self):
         result = self.ruleset.process(self.text)

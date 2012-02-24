@@ -5,6 +5,7 @@ import jinja2
 import webapp2
 from google.appengine.api import memcache
 import wsd
+import regex_rules
 
 jinja_environment = jinja2.Environment(
     loader=jinja2.FileSystemLoader(
@@ -18,7 +19,7 @@ def get_rulesets():
     if rulesets is not None:
         return rulesets
     else:
-        rulesets = wsd.load_rulesets()
+        rulesets = regex_rules.get_rulesets()
         if not memcache.add('rulesets', rulesets, 10):
             wsd.LOG.error('Memcache set failed.')
         return rulesets
@@ -52,7 +53,7 @@ class Process(webapp2.RequestHandler):
             else:
                 disabled.append(ruleset.id)
         prulesets = wsd.ProcessedRulesets(rulesets, text)
-        self.response.set_cookie('d', '|'.join(disabled), max_age=365)
+        self.response.set_cookie('d', '|'.join(disabled), max_age=31556926)
         self.response.out.write(prulesets.to_html(True))
 
 

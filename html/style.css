@@ -31,7 +31,7 @@ h3 {
     padding-left: 30px;
 }
 
-.pattern, .prefix, .suffix {
+.pattern, .rule-prop {
     font-family: Consolas, Courier, monospace;
     border: silver dotted 2px;
     white-space: pre;

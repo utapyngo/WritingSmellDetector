@@ -7,7 +7,6 @@ Writing Smell Detector is a tool to help find problems in your writing.
 
 import os
 import sys
-import re
 import math
 import json
 import codecs
@@ -19,9 +18,6 @@ __license__ = 'GPL'
 __maintainer__ = 'utapyngo'
 __email__ = 'utapyngo@gmail.com'
 __status__ = 'Development'
-
-
-DEFAULT_FLAGS = re.S | re.U
 
 
 def _setup_logger():
@@ -57,19 +53,79 @@ class Rule(object):
     '''
     Base class of rules
     '''
+    def __init__(self, ruleset, name, comments=[], props={}):
+        self.ruleset = ruleset
+        self.name = name
+        self.comments = comments
+        self.props = props
+        self.patterns = [{'original': ''}]
+
     def itermatches(self, text):
         pass
 
     def process(self, text):
-        pass
+        '''
+        Apply the rule to text and return the result
+        '''
+        matched_lines = {}
+        pattern_matches = {}
+
+        def add_line(line, lineno):
+            '''
+            Add a line to the matched_lines dictionary.
+
+            If the line contains \n, split it into multiple lines
+            and add all of them.
+            '''
+            for i, chunk in enumerate(line.strip('\n').split('\n')):
+                matched_lines[lineno + i] = chunk
+
+        for pattern, matches in self.itermatches(text):
+            rmatches = {}
+            line = None
+            for match in matches:
+                start, end = match
+                lineno = text.count('\n', 0, start) + 1
+                linestart = text.rfind('\n', 0, start) + 1
+                lineend = text.find('\n', end, -1)
+                if lineend > 0:
+                    line = text[linestart:lineend]
+                else:
+                    line = text[linestart:]
+                add_line(line, lineno)
+                # location of the match relative to current line
+                lstart, lend = start - linestart, end - linestart
+                linespan = line.strip().count('\n') + 1
+                if lineno in rmatches:
+                    rmatches[lineno][0] = linespan
+                    rmatches[lineno][1].append((lstart, lend))
+                else:
+                    rmatches[lineno] = [linespan, [(lstart, lend)]]
+            if rmatches:
+                pattern_matches[pattern['original']] = rmatches
+        return ProcessedRule(self, matched_lines, pattern_matches)
 
 
-class RuleSet(object):
+class Ruleset(object):
     '''
     Set of rules
     '''
+    def __init__(self, name, comments=[], props={}):
+        self.name = name
+        self.comments = comments
+        self.props = props
+
     def process(self, text):
-        pass
+        '''
+        Apply all rules to text and return the results
+        '''
+        matched_lines = {}
+        matched_rules = []
+        for rule in self.rules:
+            processed_rule = rule.process(text)
+            matched_lines.update(processed_rule.lines)
+            matched_rules.append(processed_rule)
+        return ProcessedRuleset(self, matched_lines, matched_rules)
 
 
 class ProcessedRule(object):
@@ -205,6 +261,41 @@ class ProcessedRulesets(object):
                 print_console(u'{1:>{0}}: {2}'
                               .format(max_digits, lineno + i, chunk))
 
+        def print_pattern(rule, pattern):
+            matched_lines = rule.pattern_matches.get(pattern, {})
+            nummatches = len(matched_lines)
+            if not include_empty and nummatches == 0:
+                return
+            print
+            print_console(u'    Pattern: {0} ({1})'
+                          .format(pattern, nummatches))
+            if hasattr(rule.rule, 'get_pattern_props'):
+                props = rule.rule.get_pattern_props(pattern)
+                for pp, pv in props.iteritems():
+                    print_console(u'    {0}: {1}'.format(pp.title(), pv))
+            for lineno in sorted(matched_lines.keys()):
+                linespan, matches = matched_lines[lineno]
+                data = ''
+                for i in range(linespan):
+                    data += self.lines[lineno + i] + '\n'
+                offset = 0
+                chunks = [{'data': data}]
+                for match in matches:
+                    start = match[0] - offset
+                    end = match[1] - offset
+                    line = chunks.pop()['data']
+                    chunks.append({'highlight': False,
+                                   'data': line[:start]})
+                    chunks.append({'highlight': True,
+                                   'data': line[start:end]})
+                    chunks.append({'highlight': False,
+                                   'data': line[end:]})
+                    offset += len(line) - len(chunks[-1]['data'])
+                for chunk in chunks:
+                    if chunk['highlight']:
+                        chunk['data'] = '*' + chunk['data'] + '*'
+                print_line(''.join([c['data'] for c in chunks]), lineno)
+
         for ruleset in self.rulesets:
             if not include_empty and ruleset.nummatches == 0:
                 continue
@@ -224,187 +315,11 @@ class ProcessedRulesets(object):
                 if rule.rule.comments:
                     for comment in rule.rule.comments:
                         print_console(comment)
-                if rule.rule.prefix:
-                    print_console(u'        Prefix:', rule.rule.prefix)
-                if rule.rule.suffix:
-                    print_console(u'        Suffix:', rule.rule.suffix)
+                for prop, value in rule.rule.props.iteritems():
+                    if value:
+                        print_console(u'        {0}: {1}'.format(prop.title(), value))
                 for pattern in rule.rule.patterns:
-                    opattern = pattern['original']
-                    matched_lines = rule.pattern_matches.get(opattern, {})
-                    nummatches = len(matched_lines)
-                    if not include_empty and nummatches == 0:
-                        continue
-                    print
-                    print_console(u'    Pattern: {0} ({1})'
-                                  .format(opattern, nummatches))
-                    if hasattr(rule.rule.re, 'iteritems'):
-                        print_console(u'    Replace:', rule.rule.re[opattern])
-                    for lineno in sorted(matched_lines.keys()):
-                        linespan, matches = matched_lines[lineno]
-                        data = ''
-                        for i in range(linespan):
-                            data += self.lines[lineno + i] + '\n'
-                        offset = 0
-                        chunks = [{'data': data}]
-                        for match in matches:
-                            start = match[0] - offset
-                            end = match[1] - offset
-                            line = chunks.pop()['data']
-                            chunks.append({'highlight': False,
-                                           'data': line[:start]})
-                            chunks.append({'highlight': True,
-                                           'data': line[start:end]})
-                            chunks.append({'highlight': False,
-                                           'data': line[end:]})
-                            offset += len(line) - len(chunks[-1]['data'])
-                        for chunk in chunks:
-                            if chunk['highlight']:
-                                chunk['data'] = '*' + chunk['data'] + '*'
-                        print_line(''.join([c['data'] for c in chunks]), lineno)
-
-
-def process_flags(flags, default=0):
-    '''
-    Process a string of regular expression flags like "+LUX-M".
-    Return a combination of corresponding re.X values.
-    '''
-    mode = '+'
-    result = default
-    for flag in flags:
-        if flag in '+-':
-            mode = flag
-            continue
-        elif flag in 'SLUMIX':
-            if mode == '-':
-                result &= ~getattr(re, flag)
-            else:
-                result |= getattr(re, flag)
-        else:
-            LOG.warn('unknown flag: ' + flag)
-            continue
-    return result
-
-
-class RegularExpressionRule(Rule):
-    '''Regular expression rule'''
-
-    def __init__(self, data, prefix, suffix, flags, replace):
-        Rule.__init__(self)
-        self.data = data
-        self.name = data.get('name', '')
-        self.comments = data.get('comments', [])
-        self.prefix = data.get('prefix', prefix)
-        if '\b' in self.prefix:
-            LOG.warn(r'\b found in prefix. \
-                To match word boundaries use \\b instead.')
-        self.suffix = data.get('suffix', suffix)
-        if '\b' in self.suffix:
-            LOG.warn(r'\b found in suffix. \
-                To match word boundaries use \\b instead.')
-        self.flags = process_flags(data.get('flags', ''), flags)
-        self.replace = data.get('replace', replace)
-        self.re = data.get('re', [])
-        if isinstance(self.re, basestring):
-            patterns = [self.re]
-        elif hasattr(self.re, '__getitem__'):
-            patterns = self.re
-        for patern in patterns:
-            if '\b' in patern:
-                LOG.warn(r'\b found in pattern {0}. \
-                    To match word boundaries use \\b instead.'
-                    .format(patern.replace('\b', r'\b')))
-        self.patterns = []
-        for patern in patterns:
-            original_pattern = patern
-            for search_string, replacement in self.replace.iteritems():
-                patern = re.sub(search_string, replacement, patern)
-            compiled = re.compile(self.prefix + patern + self.suffix,
-                                  self.flags)
-            self.patterns.append({'compiled': compiled,
-                                  'original': original_pattern})
-
-    def itermatches(self, text):
-        '''
-        Return an iterator over all pairs (pattern, matches).
-        matches is an iterator over all matches in the text.
-        '''
-        for pattern in self.patterns:
-            yield pattern, pattern['compiled'].finditer(text)
-
-    def process(self, text):
-        '''
-        Apply the rule to text and return the result
-        '''
-        matched_lines = {}
-        pattern_matches = {}
-
-        def add_line(line, lineno):
-            '''
-            Add a line to the matched_lines dictionary.
-
-            If the line contains \n, split it into multiple lines
-            and add all of them.
-            '''
-            for i, chunk in enumerate(line.strip('\n').split('\n')):
-                matched_lines[lineno + i] = chunk
-
-        for pattern, matches in self.itermatches(text):
-            rmatches = {}
-            line = None
-            for match in matches:
-                start, end = match.span()
-                lineno = text.count('\n', 0, start) + 1
-                linestart = text.rfind('\n', 0, start) + 1
-                lineend = text.find('\n', end, -1)
-                if lineend > 0:
-                    line = text[linestart:lineend]
-                else:
-                    line = text[linestart:]
-                add_line(line, lineno)
-                # location of the match relative to current line
-                lstart, lend = start - linestart, end - linestart
-                linespan = line.strip().count('\n') + 1
-                if lineno in rmatches:
-                    rmatches[lineno][0] = linespan
-                    rmatches[lineno][1].append((lstart, lend))
-                else:
-                    rmatches[lineno] = [linespan, [(lstart, lend)]]
-            if rmatches:
-                pattern_matches[pattern['original']] = rmatches
-        return ProcessedRule(self, matched_lines, pattern_matches)
-
-
-class RegularExpressionRuleSet(RuleSet):
-    '''
-    Set of regular expression rules
-    '''
-    def __init__(self, data, id):
-        RuleSet.__init__(self)
-        self.id = unicode(id).replace(u'\\', u'/')
-        self.data = data
-        self.name = data['ruleset']
-        self.comments = data.get('comments')
-        self.prefix = data.get('prefix', '')
-        self.suffix = data.get('suffix', '')
-        self.flags = process_flags(data.get('flags', ''), DEFAULT_FLAGS)
-        self.replace = data.get('replace', {})
-        self.rules = [
-            RegularExpressionRule(
-                d, self.prefix, self.suffix, self.flags, self.replace)
-            for d in data['rules']
-        ]
-
-    def process(self, text):
-        '''
-        Apply all rules to text and return the results
-        '''
-        matched_lines = {}
-        matched_rules = []
-        for rule in self.rules:
-            processed_rule = rule.process(text)
-            matched_lines.update(processed_rule.lines)
-            matched_rules.append(processed_rule)
-        return ProcessedRuleset(self, matched_lines, matched_rules)
+                    print_pattern(rule, pattern['original'])
 
 
 class IterableEncoder(json.JSONEncoder):
@@ -421,65 +336,32 @@ class IterableEncoder(json.JSONEncoder):
         return super(IterableEncoder, self).default(o)
 
 
-def load_rulesets(masks=None):
-    '''
-    Load rulesets from masks list.
-    Shell wildcards are allowed.
-    Load from `rules` directory by default.
-    '''
-    from glob import glob
-    jsoncomment = re.compile('^\s*//')
-    rules_folder = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'rules')
-    rulesets = []
-    if not masks:
-        masks = [
-            os.path.join(rules_folder, '*')
-        ]
-    for mask in masks:
-        empty_mask = True
-        for rule_file_or_dir in glob(mask):
-            empty_mask = False
-            if os.path.isdir(rule_file_or_dir):
-                rule_files = glob(os.path.join(rule_file_or_dir, '*'))
-            else:
-                rule_files = (rule_file_or_dir,)
-            for rule_file in rule_files:
-                try:
-                    # remove comments but preserve the same number of lines
-                    jsonrule = ''.join(
-                        '\n' if jsoncomment.search(line)
-                        else line
-                        for line
-                        in codecs.open(rule_file, encoding='utf-8').readlines()
-                    )
-                    ruleset_dict = json.loads(jsonrule)
-                except ValueError, exc:
-                    LOG.error(exc)
-                    LOG.error("In file: " + rule_file)
-                    continue
-                ruleset = RegularExpressionRuleSet(ruleset_dict,
-                    os.path.relpath(rule_file, rules_folder))
-                rulesets.append(ruleset)
-        if empty_mask:
-            LOG.warn('No files matching "{0}" found'.format(mask))
-    return rulesets
-
-
 def main(args):
     '''
     Load text from args.text.
     Load and run rulesets from args.ruleset list.
     Store results to args.outfile if specified.
     '''
-    # Load the text
+    # Check for errors
     if not os.path.isfile(args.text):
         LOG.error('File not found: ' + args.text)
         return 1
+    # Load text
     text = codecs.open(args.text, encoding='utf-8').read()
     LOG.info('Loaded {0} bytes from {1}'.format(len(text), args.text))
-    # Load and process rulesets
-    rulesets = load_rulesets(args.ruleset)
+    # Load rules
+    rulesets = []
+    rules = args.rules
+    while rules:
+        rule_name = rules[0]
+        rules[0:1] = []
+        mod = __import__('{0}_rules'.format(rule_name))
+        if hasattr(mod, 'get_rulesets'):
+            argcount = mod.get_rulesets.func_code.co_argcount
+            rule_args = rules[:argcount]
+            rules[:argcount] = []
+            rulesets.extend(mod.get_rulesets(*rule_args))
+    # Process rules
     prulesets = ProcessedRulesets(rulesets, text)
     # Output the result
     if args.outfile:
@@ -514,8 +396,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('text', type=str,
         help='text file',)
-    parser.add_argument('ruleset', type=str, nargs='*',
-        help='ruleset file')
+    parser.add_argument('rules', type=str, nargs='*',
+        help='rule type followed by arguments required by this type')
     export = parser.add_argument_group('export')
     html_group = parser.add_argument_group('html')
     json_group = parser.add_argument_group('json')
@@ -529,10 +411,10 @@ def parse_args():
     html_group.add_argument('-nec', '--no-embed-css', action='store_true',
         help="don't embed style.css into generated html file")
     json_group.add_argument('-r', '--reftext', action='store_true',
-        help = 'insert a reference to the text file into the output \
+        help='insert a reference to the text file into the output \
         json file instead of the list of matching lines')
     json_group.add_argument('-a', '--abspath', action='store_true',
-        help = 'insert absolute path to the text file into the output \
+        help='insert absolute path to the text file into the output \
         json file instead of the path passed to command line')
     json_group.add_argument('-i', '--indent',
         type=int, action='store', default=4,
