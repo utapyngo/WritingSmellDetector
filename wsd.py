@@ -9,6 +9,7 @@ import os
 import sys
 import math
 import json
+from glob import glob
 import codecs
 
 __author__ = 'John Joseph Horton, utapyngo'
@@ -110,10 +111,14 @@ class Ruleset(object):
     '''
     Set of rules
     '''
-    def __init__(self, name, comments=[], props={}):
+    def __init__(self, name, comments=[], props={}, uid=None):
         self.name = name
         self.comments = comments
         self.props = props
+        if uid:
+            self.uid = uid
+        else:
+            self.uid = name
 
     def process(self, text):
         '''
@@ -352,15 +357,25 @@ def main(args):
     # Load rules
     rulesets = []
     rules = args.rules
-    while rules:
-        rule_name = rules[0]
-        rules[0:1] = []
-        mod = __import__('{0}_rules'.format(rule_name))
-        if hasattr(mod, 'get_rulesets'):
-            argcount = mod.get_rulesets.func_code.co_argcount
-            rule_args = rules[:argcount]
-            rules[:argcount] = []
-            rulesets.extend(mod.get_rulesets(*rule_args))
+    if rules:
+        while rules:
+            rule_name = rules[0]
+            rules[0:1] = []
+            mod = __import__('{0}_rules'.format(rule_name))
+            if hasattr(mod, 'get_rulesets'):
+                argcount = mod.get_rulesets.func_code.co_argcount
+                rule_args = rules[:argcount]
+                rules[:argcount] = []
+                rulesets.extend(mod.get_rulesets(*rule_args))
+    else:
+        for rule_name in (fn[:-9] for fn in glob('*_rules.py')):
+            mod = __import__('{0}_rules'.format(rule_name))
+            if hasattr(mod, 'get_rulesets'):
+                try:
+                    rulesets.extend(mod.get_rulesets())
+                    LOG.info('Loaded: {0}'.format(rule_name))
+                except TypeError, e:
+                    LOG.warn('Not loaded: {0}: {1}'.format(rule_name, e))
     # Process rules
     prulesets = ProcessedRulesets(rulesets, text)
     # Output the result
@@ -392,12 +407,16 @@ def parse_args():
     '''
     Parse and return command line arguments.
     '''
+    ruletypes = (fn[:-9] for fn in glob('*_rules.py'))
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('text', type=str,
         help='text file',)
     parser.add_argument('rules', type=str, nargs='*',
-        help='rule type followed by arguments required by this type')
+        help = 'rule type followed by arguments required by this type\n' +
+        'available types of rules are: ' + ', '.join(ruletypes))
+    #parser.add_argument('--info', type=str, metavar='RULETYPE',
+    #    help='show number of arguments and docstrings of a specific rule type')
     export = parser.add_argument_group('export')
     html_group = parser.add_argument_group('html')
     json_group = parser.add_argument_group('json')
