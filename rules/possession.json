@@ -1,5 +1,8 @@
 {
-    "ruleset": "Possession (pg112 from OGTS)",
+    "ruleset": "Possession",
+    "comments": [
+        "pg112 from OGTS"
+    ],
     "type": "re",
     "flags": "I",
     "rules": [
