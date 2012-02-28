@@ -47,14 +47,14 @@
         {% for ruleset in rulesets %}
           <div class="ruleset">
             <input type="checkbox"
-              id="{{ ruleset.id }}"
+              id="{{ ruleset.uid }}"
               name="ruleset"
-              value="{{ ruleset.id }}"
-            {% if not ruleset.id in disabled %}
+              value="{{ ruleset.uid }}"
+            {% if not ruleset.uid in disabled %}
               checked
             {% endif %}
             />
-            <label for="{{ ruleset.id }}">{{ ruleset.name }}</label>
+            <label for="{{ ruleset.uid }}">{{ ruleset.name }}</label>
           </div>
         {% endfor %}
       </div>
