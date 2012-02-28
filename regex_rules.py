@@ -90,7 +90,7 @@ class RegularExpressionRuleset(Ruleset):
     '''
     Set of regular expression rules
     '''
-    def __init__(self, data, id):
+    def __init__(self, data, uid):
         Ruleset.__init__(self,
             data['ruleset'],
             data.get('comments', []),
@@ -99,7 +99,7 @@ class RegularExpressionRuleset(Ruleset):
                 'suffix': data.get('suffix', ''),
             }
         )
-        self.id = unicode(id).replace(u'\\', u'/')
+        self.uid = unicode(uid).replace(u'\\', u'/')
         self.data = data
         self.flags = process_flags(data.get('flags', ''), DEFAULT_FLAGS)
         self.replace = data.get('replace', {})
