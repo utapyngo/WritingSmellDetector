@@ -369,13 +369,12 @@ def main(args):
                 rulesets.extend(mod.get_rulesets(*rule_args))
     else:
         for rule_name in (fn[:-9] for fn in glob('*_rules.py')):
-            mod = __import__('{0}_rules'.format(rule_name))
-            if hasattr(mod, 'get_rulesets'):
-                try:
-                    rulesets.extend(mod.get_rulesets())
-                    LOG.info('Loaded: {0}'.format(rule_name))
-                except TypeError, e:
-                    LOG.warn('Not loaded: {0}: {1}'.format(rule_name, e))
+            try:
+                mod = __import__('{0}_rules'.format(rule_name))
+                rulesets.extend(mod.get_rulesets())
+                LOG.info('Loaded: {0}'.format(rule_name))
+            except Exception, e:
+                LOG.warn('Not loaded: {0}: {1}'.format(rule_name, e))
     # Process rules
     prulesets = ProcessedRulesets(rulesets, text)
     # Output the result
