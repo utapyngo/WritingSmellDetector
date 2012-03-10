@@ -6,17 +6,18 @@ A tool for finding problematic writing.
 Requirements
 ------------
 
-* Python 2.6 or 2.7
+* [Python](http://python.org/download/) 2.6 or 2.7;
 * [argparse](http://pypi.python.org/pypi/argparse) (bundled with Python 2.7);
 * [jinja2](http://jinja.pocoo.org/).
 
 Usage
 -----
 
-Simple usage
-(will try to process your text with all rules 
-and will output the result into an html file):
+Simple usage:
 
-    $ python wsd.py -o output_file.html your_text_file
+    python wsd.py -o output_file.html your_text_file
+    
+will try to process your text with all rules 
+and will output the result into an html file.
 
-For advanced usage refer to `python wsd.py --help`.
+For advanced usage please refer to `python wsd.py --help`.
