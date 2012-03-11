@@ -1,5 +1,8 @@
 {
     "ruleset": "Jargon to avoid",
+    "comments": [
+        "Source http://www.stcwdc.org/avoid_jargon.shtml"
+    ],
     "type": "re",
     "prefix": "\\b",
     "suffix": "\\b",
@@ -221,6 +224,14 @@
         {
             "name": "Either ways or means, not both",
             "re": "ways and means"
+        },
+        {
+            "name": "Remove it is evident that",
+            "re": "it is evident that \\w+ produced \\w+"
+        },
+        {
+            "name": "\\w+ reported",
+            "re": "it has been reported by \\w+"
         }
     ]
 }
