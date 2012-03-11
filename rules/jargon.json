@@ -1,5 +1,8 @@
 {
     "ruleset": "Jargon to avoid",
+    "comments": [
+        "Source http://www.stcwdc.org/avoid_jargon.shtml"
+    ],
     "type": "re",
     "prefix": "\\b",
     "suffix": "\\b",
@@ -188,8 +191,47 @@
                 "with the possible exception of": "except",
                 "with the result that": "so that",
                 "apparent": "clear",
-                "within the ballpark of": "about"
+                "within the ballpark of": "about",
+                "in a very real sense": "in a sense",
+                "initiate": "begin / start",
+                "remuneration": "pay / payment",
+                "by means of": "by / with",
+                "during the course of": "during / while",
+                "facilitate": "ease / help",
+                "in a position to": "can / may", 
+                "in close proximity to": "close / near",
+                "in connection with": "about / concerning",
+                "in relation to": "about / towards / toward",
+                "in the possession of": "has / have",
+                "initiate": "begin / start",
+                "on the other hand": "although / however / otherwise",
+                "on the part of": "by / among / for",
+                "through the use of" : "by / with",
+                "with respect to": "about / except"
             }
+        },
+        {
+            "name": "Avoid in technical or scientific writing",
+            "re": [
+                "it has long been known that",
+                "it is clear that much additional work will be required before a complete understanding",
+                "it is of interest to note that",
+                "let me make one thing perfectly clear",
+                "needless to say",
+                "our attention has been called to the fact that"
+            ]
+        },
+        {
+            "name": "Either ways or means, not both",
+            "re": "ways and means"
+        },
+        {
+            "name": "Remove it is evident that",
+            "re": "it is evident that \\w+ produced \\w+"
+        },
+        {
+            "name": "\\w+ reported",
+            "re": "it has been reported by \\w+"
         }
     ]
 }
