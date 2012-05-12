@@ -447,4 +447,5 @@ def parse_args():
     return args
 
 if __name__ == '__main__':
+    print parse_args() 
     sys.exit(main(parse_args()))
