@@ -4,3 +4,12 @@
 
 # generated html files in the root folder
 /*.html
+
+# python distribution files
+MANIFEST
+/WritingSmellDetector.egg-info/
+/build/
+/dist/
+
+# misc files
+Makefile
