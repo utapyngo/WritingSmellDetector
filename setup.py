@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from distutils.core import setup
+
+from setuptools import setup
 from os.path import join, dirname
 
 import wsd
@@ -17,7 +18,11 @@ setup(name='WritingSmellDetector',
       packages=[''],
       package_data={'': ['*.md', 'html/*.html', 'html/*.css',
                          'rules/*.json', 'rules/latex/*.json']},
-      scripts=['wsd.py'],
+      package_dir = {'': '.'},
+      entry_points={
+          'console_scripts':
+              ['wsd = wsd:main',
+               ]},
       classifiers=(
           'Development Status :: 3 - Alpha',
           'Environment :: Console',

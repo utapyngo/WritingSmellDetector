@@ -341,73 +341,19 @@ class IterableEncoder(json.JSONEncoder):
             return list(iterable)
         return super(IterableEncoder, self).default(o)
 
+def get_base_path():
+    return os.path.dirname(os.path.abspath(__file__))
 
-def main(args):
-    '''
-    Load text from args.text.
-    Load and run rulesets from args.ruleset list.
-    Store results to args.outfile if specified.
-    '''
-    # Check for errors
-    if not os.path.isfile(args.text):
-        LOG.error('File not found: ' + args.text)
-        return 1
-    # Load text
-    text = codecs.open(args.text, encoding='utf-8').read()
-    LOG.info('Loaded {0} bytes from {1}'.format(len(text), args.text))
-    # Load rules
-    rulesets = []
-    rules = args.rules
-    if rules:
-        while rules:
-            rule_name = rules[0]
-            rules[0:1] = []
-            mod = __import__('{0}_rules'.format(rule_name))
-            if hasattr(mod, 'get_rulesets'):
-                argcount = mod.get_rulesets.func_code.co_argcount
-                rule_args = rules[:argcount]
-                rules[:argcount] = []
-                rulesets.extend(mod.get_rulesets(*rule_args))
-    else:
-        for rule_name in (fn[:-9] for fn in glob('*_rules.py')):
-            try:
-                mod = __import__('{0}_rules'.format(rule_name))
-                rulesets.extend(mod.get_rulesets())
-                LOG.info('Loaded: {0}'.format(rule_name))
-            except Exception, e:
-                LOG.warn('Not loaded: {0}: {1}'.format(rule_name, e))
-    # Process rules
-    prulesets = ProcessedRulesets(rulesets, text)
-    # Output the result
-    if args.outfile:
-        if args.output_format == 'json':
-            if args.reftext:
-                path = os.path.abspath(args.text) if args.abspath else args.text
-                json_results = prulesets.to_dict(False)
-                import hashlib
-                json_results['text'] = {
-                    'file': path,
-                    'md5': hashlib.md5(args.text).hexdigest()
-                }
-            else:
-                json_results = prulesets.to_dict(True)
-            json.dump(json_results,
-                      codecs.open(args.outfile, 'wb', encoding='utf-8'),
-                      indent=args.indent, cls=IterableEncoder)
-        elif args.output_format == 'html':
-            html = prulesets.to_html(not args.no_embed_css, args.include_empty)
-            outfile = codecs.open(args.outfile, 'wb', encoding='utf-8')
-            outfile.write(html)
-        LOG.info('Results saved to: {0}'.format(args.outfile))
-    else:
-        prulesets.to_console(args.include_empty)
-
+def get_rule_types():
+    rules_mask = os.path.join(get_base_path(), '*_rules.py')
+    for fn in glob(rules_mask):
+        yield os.path.basename(fn)[:-9]
 
 def parse_args():
     '''
     Parse and return command line arguments.
     '''
-    ruletypes = (fn[:-9] for fn in glob('*_rules.py'))
+    ruletypes = get_rule_types()
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('text', type=str,
@@ -446,6 +392,68 @@ def parse_args():
     if args.indent == 0:
         args.indent = None
     return args
+
+def main(args=parse_args()):
+    '''
+    Load text from args.text.
+    Load and run rulesets from args.ruleset list.
+    Store results to args.outfile if specified.
+    '''
+    # Check for errors
+    if not os.path.isfile(args.text):
+        LOG.error('File not found: ' + args.text)
+        return 1
+    # Load text
+    text = codecs.open(args.text, encoding='utf-8').read()
+    LOG.info('Loaded {0} bytes from {1}'.format(len(text), args.text))
+    # Load rules
+    rulesets = []
+    rules = args.rules
+    if rules:
+        while rules:
+            rule_name = rules[0]
+            rules[0:1] = []
+            mod = __import__('{0}_rules'.format(rule_name))
+            if hasattr(mod, 'get_rulesets'):
+                argcount = mod.get_rulesets.func_code.co_argcount
+                rule_args = rules[:argcount]
+                rules[:argcount] = []
+                rulesets.extend(mod.get_rulesets(*rule_args))
+    else:
+        import imp
+        for rule_name in get_rule_types():
+            try:
+                modname = '{0}_rules'.format(rule_name)
+                mod = imp.load_source(modname, os.path.join(get_base_path(), '{0}.py'.format(modname)))
+                rulesets.extend(mod.get_rulesets())
+                LOG.info('Loaded: {0}'.format(rule_name))
+            except Exception, e:
+                LOG.warn('Not loaded: {0}: {1}'.format(rule_name, e))
+    # Process rules
+    prulesets = ProcessedRulesets(rulesets, text)
+    # Output the result
+    if args.outfile:
+        if args.output_format == 'json':
+            if args.reftext:
+                path = os.path.abspath(args.text) if args.abspath else args.text
+                json_results = prulesets.to_dict(False)
+                import hashlib
+                json_results['text'] = {
+                    'file': path,
+                    'md5': hashlib.md5(args.text).hexdigest()
+                }
+            else:
+                json_results = prulesets.to_dict(True)
+            json.dump(json_results,
+                      codecs.open(args.outfile, 'wb', encoding='utf-8'),
+                      indent=args.indent, cls=IterableEncoder)
+        elif args.output_format == 'html':
+            html = prulesets.to_html(not args.no_embed_css, args.include_empty)
+            outfile = codecs.open(args.outfile, 'wb', encoding='utf-8')
+            outfile.write(html)
+        LOG.info('Results saved to: {0}'.format(args.outfile))
+    else:
+        prulesets.to_console(args.include_empty)
 
 if __name__ == '__main__':
     print parse_args() 
