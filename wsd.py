@@ -19,6 +19,7 @@ __license__ = 'GPL'
 __maintainer__ = 'utapyngo'
 __email__ = 'utapyngo@gmail.com'
 __status__ = 'Development'
+__version__ = '0.1'
 
 
 def _setup_logger():
