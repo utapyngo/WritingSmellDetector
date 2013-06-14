@@ -26,9 +26,11 @@ Simple usage (following installation):
 
     wsd -o output_file.html your_text_file
     
-This will try to process your text with all rules and will output the result into an html file.
+This will try to process your text with all rules 
+and will output the result into an html file.
+
 If you did not install it, you can run it via: 
 
     python wsd.py --o output_file.html your_text_file 
 
-For advanced usage please refer to `python wsd.py --help`.
+For advanced usage please refer to `wsd --help`.
