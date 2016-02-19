@@ -48,7 +48,7 @@ def print_console(*args):
     '''
     Print unicode args to console replacing unknown characters
     '''
-    print u' '.join(args).encode(_encoding, 'replace')
+    print(u' '.join(args).encode(_encoding, 'replace'))
 
 
 class Rule(object):
@@ -272,7 +272,7 @@ class ProcessedRulesets(object):
             nummatches = len(matched_lines)
             if not include_empty and nummatches == 0:
                 return
-            print
+            print()
             print_console(u'    Pattern: {0} ({1})'
                           .format(pattern, nummatches))
             if hasattr(rule.rule, 'get_pattern_props'):
@@ -305,8 +305,8 @@ class ProcessedRulesets(object):
         for ruleset in self.rulesets:
             if not include_empty and ruleset.nummatches == 0:
                 continue
-            print
-            print
+            print()
+            print()
             print_console(u'            {0} ({1})'
                           .format(ruleset.ruleset.name, ruleset.nummatches))
             if ruleset.ruleset.comments:
@@ -315,7 +315,7 @@ class ProcessedRulesets(object):
             for rule in ruleset.rules:
                 if not include_empty and rule.nummatches == 0:
                     continue
-                print
+                print()
                 print_console(u'        Rule: {0} ({1})'
                               .format(rule.rule.name, rule.nummatches))
                 if rule.rule.comments:
@@ -386,7 +386,7 @@ def parse_args():
         help='json indent size')
     try:
         args = parser.parse_args()
-    except Exception, exc:
+    except Exception as exc:
         LOG.error(exc)
         sys.exit(1)
     if args.indent == 0:
@@ -427,7 +427,7 @@ def main(args=parse_args()):
                 mod = imp.load_source(modname, os.path.join(get_base_path(), '{0}.py'.format(modname)))
                 rulesets.extend(mod.get_rulesets())
                 LOG.info('Loaded: {0}'.format(rule_name))
-            except Exception, e:
+            except Exception as e:
                 LOG.warn('Not loaded: {0}: {1}'.format(rule_name, e))
     # Process rules
     prulesets = ProcessedRulesets(rulesets, text)
@@ -456,5 +456,5 @@ def main(args=parse_args()):
         prulesets.to_console(args.include_empty)
 
 if __name__ == '__main__':
-    print parse_args() 
+    print(parse_args())
     sys.exit(main(parse_args()))
