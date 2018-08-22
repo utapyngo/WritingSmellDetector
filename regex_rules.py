@@ -42,7 +42,7 @@ class RegularExpressionRule(Rule):
                 'suffix': data.get('suffix', props['suffix']),
             }
         )
-        for prop, value in self.props.iteritems():
+        for prop, value in self.props.items():
             if '\b' in value:
                 LOG.warn(r'\b found in {0}. \
                     To match word boundaries use \\b instead.'.format(prop))
@@ -50,7 +50,7 @@ class RegularExpressionRule(Rule):
         self.flags = process_flags(data.get('flags', ''), flags)
         self.replace = data.get('replace', replace)
         self.re = data.get('re', [])
-        if isinstance(self.re, basestring):
+        if isinstance(self.re, str):
             patterns = [self.re]
         elif hasattr(self.re, '__getitem__'):
             patterns = self.re
@@ -62,7 +62,7 @@ class RegularExpressionRule(Rule):
         self.patterns = []
         for patern in patterns:
             original_pattern = patern
-            for search_string, replacement in self.replace.iteritems():
+            for search_string, replacement in self.replace.items():
                 patern = re.sub(search_string, replacement, patern)
             compiled = re.compile(
                 self.props['prefix'] + patern + self.props['suffix'],
@@ -80,7 +80,7 @@ class RegularExpressionRule(Rule):
             yield pattern, (m.span() for m in pattern['compiled'].finditer(text))
 
     def get_pattern_props(self, pattern):
-        if hasattr(self.re, 'iteritems'):
+        if hasattr(self.re, 'items'):
             return {'replace': self.re[pattern]}
         else:
             return {}
@@ -99,7 +99,7 @@ class RegularExpressionRuleset(Ruleset):
                 'suffix': data.get('suffix', ''),
             }
         )
-        self.uid = unicode(uid).replace(u'\\', u'/')
+        self.uid = str(uid).replace(u'\\', u'/')
         self.data = data
         self.flags = process_flags(data.get('flags', ''), DEFAULT_FLAGS)
         self.replace = data.get('replace', {})
@@ -141,7 +141,7 @@ def get_rulesets(masks=None):
                         in codecs.open(rule_file, encoding='utf-8').readlines()
                     )
                     ruleset_dict = json.loads(jsonrule)
-                except ValueError, exc:
+                except ValueError as exc:
                     LOG.error(exc)
                     LOG.error("In file: " + rule_file)
                     continue

@@ -148,7 +148,8 @@ class ProcessedRule(object):
         self.lines = lines
         # dictionary of { pattern: [(lineno, start, end), ...] }
         self.pattern_matches = pattern_matches
-        self.nummatches = sum(len(m) for m in pattern_matches.itervalues())
+        #self.nummatches = sum(len(m) for m in pattern_matches.itervalues())
+        self.nummatches = sum(len(m) for m in pattern_matches.items())
 
 
 class ProcessedRuleset(object):
@@ -277,7 +278,7 @@ class ProcessedRulesets(object):
                           .format(pattern, nummatches))
             if hasattr(rule.rule, 'get_pattern_props'):
                 props = rule.rule.get_pattern_props(pattern)
-                for pp, pv in props.iteritems():
+                for pp, pv in props.items():
                     print_console(u'    {0}: {1}'.format(pp.title(), pv))
             for lineno in sorted(matched_lines.keys()):
                 linespan, matches = matched_lines[lineno]
@@ -321,7 +322,7 @@ class ProcessedRulesets(object):
                 if rule.rule.comments:
                     for comment in rule.rule.comments:
                         print_console(comment)
-                for prop, value in rule.rule.props.iteritems():
+                for prop, value in rule.rule.props.items():
                     if value:
                         print_console(u'        {0}: {1}'.format(prop.title(), value))
                 for pattern in rule.rule.patterns:

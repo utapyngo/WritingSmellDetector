@@ -1,14 +1,14 @@
 {%- macro render_pattern(rule, p) %}
   <div class="pattern-props">
     {% if rule.rule.get_pattern_props is defined %}
-      {% for pp, pv in rule.rule.get_pattern_props(p).iteritems() %}
+      {% for pp, pv in rule.rule.get_pattern_props(p).items() %}
         <div class="pattern-prop">
           {{ pp|title }}: <span class="pattern-prop-value">{{ pv|e }}</span>
         </div>
       {% endfor %}
     {% endif %}
   </div>
-  {% if rule.pattern_matches.has_key(p) %}
+  {% if p in rule.pattern_matches %}
     {% for lineno in rule.pattern_matches[p].keys() | sort %}
       <div class="match">
         <span class="lineno">
@@ -175,7 +175,7 @@
                               </div>
                             {% endfor %}
                           {% endif %}
-                          {% for prop, value in rule.rule.props.iteritems() %}
+                          {% for prop, value in rule.rule.props.items() %}
                             {% if value %}
                               <div>
                                 {{ prop|title }}: <span class="rule-prop">{{ value|e }}</span>
